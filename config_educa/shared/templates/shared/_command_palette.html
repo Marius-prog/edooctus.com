@@ -1,0 +1,18 @@
+<div x-data="{ open: false }"
+     @open-command-palette.window="open = true; $nextTick(() => $refs.input.focus())"
+     @keydown.escape.window="open = false"
+     x-show="open"
+     x-cloak
+     class="fixed inset-0 z-50 flex items-start justify-center pt-32 bg-black/60"
+     @click.self="open = false">
+  <div class="w-[600px] panel shadow-overlay" @click.stop>
+    <div class="panel-header">
+      <span class="panel-title">COMMAND PALETTE</span>
+      <span class="text-text-muted text-mono-label">esc</span>
+    </div>
+    <div class="p-3">
+      <input x-ref="input" type="text" class="input w-full" placeholder="Type a command…">
+      <p class="text-text-muted text-sm mt-3">Search, jump to course, mark complete… (M6)</p>
+    </div>
+  </div>
+</div>

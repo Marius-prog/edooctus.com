@@ -29,6 +29,7 @@ urlpatterns = [
     path('reviews/', include('reviews.urls', namespace='reviews')),
     path('certificates/', include('certificates.urls', namespace='certificates')),
     path('__debug__/', include('debug_toolbar.urls')),
+    path('components/', include('shared.urls')),
 
     # SEO URLs
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps},

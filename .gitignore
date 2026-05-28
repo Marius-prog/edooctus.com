@@ -93,6 +93,11 @@ Thumbs.db
 node_modules/
 npm-debug.log*
 
+# Tailwind build artifacts
+config_educa/theme/static/css/dist/
+config_educa/theme/static_src/node_modules/
+config_educa/theme/static_src/package-lock.json
+
 # =============================================================================
 # Duplicates / leftovers
 # =============================================================================

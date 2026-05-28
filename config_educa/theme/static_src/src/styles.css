@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Self-hosted IBM Plex Mono.
+   Drop .woff2 files into config_educa/theme/static/fonts/ before deploy.
+   Filenames: IBMPlexMono-Regular.woff2, IBMPlexMono-Medium.woff2
+   Download: https://fonts.google.com/specimen/IBM+Plex+Mono */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/static/fonts/IBMPlexMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/static/fonts/IBMPlexMono-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root { color-scheme: dark; }
+  html, body {
+    background-color: theme('colors.bg.base');
+    color: theme('colors.text.primary');
+  }
+  *:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 184, 212, 0.4);
+    border-radius: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  [x-cloak] { display: none !important; }
+}
+
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center h-8 px-3
+           text-mono-label uppercase
+           transition-colors duration-120 ease-foundry;
+    border-radius: 2px;
+  }
+  .btn-primary { @apply btn bg-accent text-bg-base hover:bg-accent-hover; }
+  .btn-ghost   { @apply btn border border-border-strong text-text-primary hover:bg-bg-hover; }
+  .btn-danger  { @apply btn bg-danger text-bg-base hover:opacity-90; }
+
+  /* Panels */
+  .panel        { @apply bg-bg-panel border border-border-subtle; border-radius: 2px; }
+  .panel-header { @apply flex items-center justify-between h-8 px-3 border-b border-border-subtle; }
+  .panel-title  { @apply text-mono-label uppercase text-text-secondary; }
+
+  /* Inputs */
+  .input {
+    @apply h-8 px-3 bg-bg-base border border-border-strong
+           text-sm text-text-primary placeholder:text-text-muted
+           focus:border-accent transition-colors duration-120;
+    border-radius: 2px;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center h-5 px-1.5 text-mono-label uppercase;
+    border-radius: 2px;
+  }
+  .badge-neutral { @apply badge border border-border-subtle text-text-secondary; }
+  .badge-accent  { @apply badge bg-accent-muted text-accent; }
+  .badge-success { @apply badge bg-success/20 text-success; }
+  .badge-warning { @apply badge bg-warning/20 text-warning; }
+  .badge-danger  { @apply badge bg-danger/20 text-danger; }
+
+  /* Sidebar nav items (referenced by _sidebar.html) */
+  .nav-item {
+    @apply flex items-center h-10 px-4 gap-3 text-text-secondary
+           hover:bg-bg-hover hover:text-text-primary
+           transition-colors duration-120 overflow-hidden whitespace-nowrap;
+  }
+  .nav-item.is-active {
+    @apply text-accent border-l-2 border-accent bg-bg-active;
+  }
+  .nav-icon  { @apply text-lg w-6 text-center shrink-0; }
+  .nav-label { @apply text-mono-label uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-120; }
+}

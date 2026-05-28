@@ -1,0 +1,21 @@
+{# Table.
+   Required: headers (list of strings), rows (list of lists of strings)
+   Optional: numeric_cols (list of 0-based column indexes rendered in mono-data) #}
+<table class="w-full">
+  <thead>
+    <tr class="border-b border-border-subtle">
+      {% for h in headers %}
+        <th class="text-mono-label uppercase text-text-secondary text-left py-2 px-3">{{ h }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+      <tr class="border-b border-border-subtle hover:bg-bg-hover">
+        {% for cell in row %}
+          <td class="py-2 px-3 {% if forloop.counter0 in numeric_cols %}text-mono-data text-text-mono{% else %}text-sm text-text-primary{% endif %}">{{ cell }}</td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>

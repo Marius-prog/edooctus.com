@@ -1,0 +1,88 @@
+{% extends "foundry_base.html" %}
+{% block title %}Components{% endblock %}
+{% block breadcrumb %}COMPONENTS{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl">
+  <h1 class="text-2xl font-semibold mb-2">Components</h1>
+  <p class="text-text-secondary mb-8">Visual catalog of the Foundry UI primitives. Internal debug page.</p>
+
+  <section class="mb-10">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">PANEL</h2>
+    {% include "shared/components/_panel.html" with title="ENROLLED COURSES" body="<p class='text-text-secondary'>Body content goes here.</p>" %}
+  </section>
+
+  <section class="mb-10">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">BUTTON</h2>
+    <div class="flex gap-3 items-center">
+      {% include "shared/components/_button.html" with label="ENROLL" icon="→" %}
+      {% include "shared/components/_button.html" with label="CANCEL" variant="ghost" %}
+      {% include "shared/components/_button.html" with label="DELETE" variant="danger" %}
+      {% include "shared/components/_button.html" with label="LINK" variant="ghost" href="#" %}
+    </div>
+  </section>
+
+  <section class="mb-10">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">INPUT</h2>
+    <div class="max-w-xs flex flex-col gap-3">
+      {% include "shared/components/_input.html" with name="username_demo" label="USERNAME" placeholder="msabaliauskas" %}
+      {% include "shared/components/_input.html" with name="password_demo" label="PASSWORD" type="password" %}
+    </div>
+  </section>
+
+  <section class="mb-10">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">BADGE</h2>
+    <div class="flex gap-2">
+      {% include "shared/components/_badge.html" with label="NEUTRAL" %}
+      {% include "shared/components/_badge.html" with label="ACCENT" variant="accent" %}
+      {% include "shared/components/_badge.html" with label="ACTIVE" variant="success" %}
+      {% include "shared/components/_badge.html" with label="DRAFT" variant="warning" %}
+      {% include "shared/components/_badge.html" with label="ERROR" variant="danger" %}
+    </div>
+  </section>
+
+  <section class="mb-10">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">PROGRESS BAR</h2>
+    <div class="max-w-md flex flex-col gap-3">
+      {% include "shared/components/_progress_bar.html" with percent=12 %}
+      {% include "shared/components/_progress_bar.html" with percent=78 %}
+      {% include "shared/components/_progress_bar.html" with percent=100 %}
+    </div>
+  </section>
+
+  <section class="mb-10">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">MODULE ROW</h2>
+    <div class="max-w-md panel">
+      {% include "shared/components/_module_row.html" with number="01" title="Functions, closures, scope" duration="1h 12m" status="complete" %}
+      {% include "shared/components/_module_row.html" with number="02" title="Iterators & generators" duration="0h 58m" status="complete" %}
+      {% include "shared/components/_module_row.html" with number="7.3" title="Decorators in depth" duration="18min" status="active" %}
+      {% include "shared/components/_module_row.html" with number="7.4" title="Decorator factory" duration="22min" %}
+      {% include "shared/components/_module_row.html" with number="08" title="Context managers" status="locked" %}
+    </div>
+  </section>
+
+  <section class="mb-10">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">ACTIVITY SPARKLINE</h2>
+    <div class="max-w-md panel p-3">
+      {% include "shared/components/_activity_sparkline.html" with bars=demo_sparkline title="Last 14 days" %}
+    </div>
+  </section>
+
+  <section class="mb-10">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">CHAT MESSAGE</h2>
+    <div class="max-w-2xl panel">
+      {% include "shared/components/_chat_message.html" with username="D.GREENFELD" timestamp="14:08" body="Welcome everyone, M7 quiz is live until Friday." role="instructor" %}
+      {% include "shared/components/_chat_message.html" with username="ANYA" timestamp="14:12" body="Anyone got time after for pair programming on 7.3?" %}
+      {% include "shared/components/_chat_message.html" with username="YOU" timestamp="14:13" body="I'm in. 16:00 UTC?" role="self" %}
+      {% include "shared/components/_chat_message.html" with username="SYSTEM" timestamp="14:20" body="Marius joined the room" role="system" %}
+    </div>
+  </section>
+
+  <section class="mb-10">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">TABLE</h2>
+    <div class="panel">
+      {% include "shared/components/_table.html" with headers=demo_table_headers rows=demo_table_rows numeric_cols=demo_table_numeric %}
+    </div>
+  </section>
+</div>
+{% endblock %}

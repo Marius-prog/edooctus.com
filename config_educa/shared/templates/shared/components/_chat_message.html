@@ -1,0 +1,14 @@
+{# ChatMessage.
+   Required: username, timestamp, body
+   Optional: role (instructor|student|self|system, default student) #}
+{% with role=role|default:"student" %}
+<article class="flex gap-3 py-2 px-3 hover:bg-bg-hover">
+  <span class="text-mono-label uppercase shrink-0 w-32 truncate
+    {% if role == 'instructor' %}text-accent
+    {% elif role == 'self' %}text-text-muted
+    {% elif role == 'system' %}italic text-text-muted
+    {% else %}text-text-primary{% endif %}">{{ username }}</span>
+  <span class="text-mono-label text-text-muted shrink-0">{{ timestamp }}</span>
+  <p class="flex-1 text-sm text-text-primary whitespace-pre-wrap break-words {% if role == 'system' %}italic text-text-muted{% endif %}">{{ body }}</p>
+</article>
+{% endwith %}

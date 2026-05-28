@@ -1,0 +1,25 @@
+{% load static %}
+<header class="h-12 bg-bg-panel border-b border-border-subtle flex items-center px-4 sticky top-0 z-30">
+  <a href="/" class="text-mono-label uppercase tracking-wider text-text-primary mr-2">EDUCTO</a>
+  <span class="text-text-muted mx-2">▸</span>
+  <span class="text-mono-label uppercase text-accent">{% block breadcrumb %}HOME{% endblock %}</span>
+
+  <div class="ml-auto flex items-center gap-3">
+    <button type="button"
+            class="btn-ghost h-8 px-2 text-text-secondary"
+            x-data
+            @click="$dispatch('open-command-palette')"
+            aria-label="Open command palette">
+      ⌘K
+    </button>
+    {% if user.is_authenticated %}
+      <span class="text-mono-label uppercase text-text-secondary">{{ user.username }}</span>
+      <form action="{% url 'logout' %}" method="post" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="btn-ghost h-8 px-2">SIGN OUT</button>
+      </form>
+    {% else %}
+      <a href="{% url 'login' %}" class="btn-primary">SIGN IN</a>
+    {% endif %}
+  </div>
+</header>

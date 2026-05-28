@@ -1,0 +1,15 @@
+{# ModuleRow — curriculum list item.
+   Required: number, title
+   Optional: duration, status (complete|active|locked), href, hx_get, hx_target #}
+<a href="{{ href|default:'#' }}"
+   {% if hx_get %}hx-get="{{ hx_get }}" hx-target="{{ hx_target|default:'#main' }}" hx-push-url="true"{% endif %}
+   class="flex items-center h-10 px-3 gap-3 border-l-2
+          {% if status == 'active' %}bg-bg-active border-accent{% else %}border-transparent hover:bg-bg-hover{% endif %}
+          transition-colors duration-120">
+  <span class="text-mono-label text-text-secondary w-12 shrink-0">{{ number }}</span>
+  <span class="flex-1 text-sm text-text-primary truncate">{{ title }}</span>
+  {% if duration %}<span class="text-mono-data text-text-muted">{{ duration }}</span>{% endif %}
+  {% if status == 'complete' %}<span class="text-success" aria-label="Complete">✓</span>
+  {% elif status == 'active' %}<span class="text-accent" aria-label="In progress">●</span>
+  {% elif status == 'locked' %}<span class="text-text-muted" aria-label="Locked">◌</span>{% endif %}
+</a>

@@ -51,6 +51,10 @@ INSTALLED_APPS = [
     'analytics.apps.AnalyticsConfig',  # Analytics & Tracking
     'reviews.apps.ReviewsConfig',  # Course Reviews
     'certificates.apps.CertificatesConfig',  # Course Certificates
+    'tailwind',
+    'theme',
+    'shared.apps.SharedConfig',
+    'django_htmx',
 ]
 
 MIDDLEWARE = [
@@ -64,6 +68,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
 ]
 
 ROOT_URLCONF = 'config_educa.urls'
@@ -79,6 +84,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'config_educa.context_processors.feature_flags',
             ],
         },
     },
@@ -191,3 +197,10 @@ STATIC_ROOT = BASE_DIR / 'static'
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6379
 REDIS_DB = 1
+
+# -- Foundry UI / Tailwind ---------------------------------------------------
+TAILWIND_APP_NAME = 'theme'
+NPM_BIN_PATH = os.environ.get('NPM_BIN_PATH', '/opt/homebrew/bin/npm')
+
+# Feature flag: opt into the new Foundry-style base.html during rollout.
+USE_FOUNDRY_UI = os.environ.get('USE_FOUNDRY_UI', 'False').lower() == 'true'

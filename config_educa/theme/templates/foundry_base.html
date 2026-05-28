@@ -1,0 +1,29 @@
+{% load static django_htmx %}
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Educto{% endblock %} ▸ Educto</title>
+  <link rel="preconnect" href="https://rsms.me/">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+  <script defer src="https://unpkg.com/htmx.org@2.0.2"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  {% django_htmx_script %}
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-bg-base text-text-primary font-sans antialiased min-h-screen">
+  <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 btn-primary z-50">Skip to main</a>
+  {% include "shared/_topbar.html" %}
+  <div class="flex">
+    {% include "shared/_sidebar.html" %}
+    <main id="main" class="flex-1 min-h-[calc(100vh-3rem)] p-6">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  {% include "shared/_command_palette.html" %}
+  <div aria-live="polite" aria-atomic="true" class="sr-only" id="hx-live-region"></div>
+  {% block extra_body %}{% endblock %}
+</body>
+</html>

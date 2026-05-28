@@ -1,0 +1,19 @@
+{# Activity sparkline.
+   Required: bars — list of dicts {"y": int, "h": int, "v": raw_value} (use views._sparkline_bars).
+   Optional: title (aria-label), max_height (default 32) #}
+{% with chart_h=max_height|default:32 %}
+<svg viewBox="0 0 {{ bars|length }}0 {{ chart_h }}"
+     preserveAspectRatio="none"
+     class="w-full h-8" role="img"
+     aria-label="{{ title|default:'Activity over time' }}">
+  {% for bar in bars %}
+    <rect x="{{ forloop.counter0 }}0"
+          y="{{ bar.y }}"
+          width="6"
+          height="{{ bar.h }}"
+          class="fill-accent">
+      <title>{{ bar.v }}</title>
+    </rect>
+  {% endfor %}
+</svg>
+{% endwith %}
