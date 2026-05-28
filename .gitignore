@@ -98,6 +98,14 @@ config_educa/theme/static/css/dist/
 config_educa/theme/static_src/node_modules/
 config_educa/theme/static_src/package-lock.json
 
+# Screenshots / large binaries dropped into docs/
+docs/*.png
+docs/*.jpg
+docs/*.jpeg
+docs/*.gif
+docs/*.mp4
+docs/*.zip
+
 # =============================================================================
 # Duplicates / leftovers
 # =============================================================================
