@@ -1,0 +1,26 @@
+{# HTMX partial — re-renders just the results list when filters change.
+   Required: courses (iterable of Course) #}
+{% if courses %}
+<div class="flex flex-col">
+  {% for c in courses %}
+  <a href="{{ c.get_absolute_url|default:'#' }}"
+     class="flex items-center gap-4 p-4 border-b border-border-subtle hover:bg-bg-hover transition-colors duration-120">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-baseline gap-3 mb-1">
+        <span class="text-mono-label uppercase tracking-wider text-text-primary truncate">{{ c.title }}</span>
+        {% if c.subject %}<span class="badge-accent">{{ c.subject.title|upper }}</span>{% endif %}
+      </div>
+      <div class="text-sm text-text-secondary line-clamp-1 mb-2">{{ c.overview }}</div>
+      <div class="flex items-center gap-4 text-mono-label uppercase text-text-muted">
+        <span>{{ c.total_modules|default:"00" }} modules</span>
+        {% if c.average_rating %}<span>★ {{ c.average_rating|floatformat:1 }} ({{ c.total_reviews }})</span>{% endif %}
+        <span>by {{ c.owner.username }}</span>
+      </div>
+    </div>
+    <span class="btn-primary shrink-0">ENROLL →</span>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="p-6 text-text-secondary text-sm">No courses match those filters.</div>
+{% endif %}

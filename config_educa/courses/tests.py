@@ -195,3 +195,96 @@ class UrlsTest(TestCase):
     def test_course_detail_url_resolves(self):
         url = reverse('course_detail', args=['mathematics-course'])
         self.assertEqual(resolve(url).func.view_class, views.CourseDetailView)
+
+
+from django.test import override_settings
+
+
+@override_settings(CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}})
+class CatalogHtmxTests(TestCase):
+    """M3: Foundry catalog — HTMX filter + search + partial response."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.owner = User.objects.create_user(username="instructor", password="pw12345!")
+        cls.math = Subject.objects.create(title="Mathematics", slug="m3-math")
+        cls.eng = Subject.objects.create(title="English Lit", slug="m3-eng")
+        cls.course_a = Course.objects.create(
+            owner=cls.owner, subject=cls.math, title="Linear Algebra",
+            slug="m3-linear-algebra", overview="Vectors and matrices",
+        )
+        cls.course_b = Course.objects.create(
+            owner=cls.owner, subject=cls.eng, title="Modern Poetry",
+            slug="m3-modern-poetry", overview="20th century verse",
+        )
+
+    def test_catalog_lists_all_courses(self):
+        response = self.client.get(reverse("course_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Linear Algebra")
+        self.assertContains(response, "Modern Poetry")
+
+    def test_catalog_filters_by_subject_query_param(self):
+        response = self.client.get(reverse("course_list") + f"?subject={self.math.slug}")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Linear Algebra")
+        self.assertNotContains(response, "Modern Poetry")
+
+    def test_catalog_filters_by_search_query(self):
+        response = self.client.get(reverse("course_list") + "?q=poetry")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Modern Poetry")
+        self.assertNotContains(response, "Linear Algebra")
+
+    def test_catalog_htmx_request_returns_partial(self):
+        response = self.client.get(
+            reverse("course_list") + "?q=poetry",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "shared/partials/_catalog_results.html")
+        # partial should NOT include the topbar/sidebar (full base)
+        self.assertNotContains(response, "<header")
+        self.assertContains(response, "Modern Poetry")
+
+
+@override_settings(
+    CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}},
+    USE_FOUNDRY_UI=True,
+)
+class CourseDetailFoundryTests(TestCase):
+    """M3: Course detail renders Foundry metadata panel + curriculum table."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.owner = User.objects.create_user(username="instr2", password="pw12345!")
+        cls.subject = Subject.objects.create(title="Programming", slug="m3-programming")
+        cls.course = Course.objects.create(
+            owner=cls.owner, subject=cls.subject,
+            title="Python Advanced", slug="m3-python-advanced",
+            overview="Decorators, async, performance.",
+        )
+        cls.m1 = Module.objects.create(course=cls.course, title="Functions", description="Closures and scope")
+        cls.m2 = Module.objects.create(course=cls.course, title="Decorators", description="Wrapping behavior")
+
+    def test_detail_page_renders_curriculum(self):
+        response = self.client.get(reverse("course_detail", args=[self.course.slug]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Python Advanced")
+        self.assertContains(response, "Functions")
+        self.assertContains(response, "Decorators")
+
+    def test_detail_page_shows_enroll_panel_for_anonymous(self):
+        response = self.client.get(reverse("course_detail", args=[self.course.slug]))
+        self.assertContains(response, "REGISTER TO ENROLL")
+
+    def test_detail_page_shows_enroll_form_for_authenticated(self):
+        self.client.login(username="instr2", password="pw12345!")
+        response = self.client.get(reverse("course_detail", args=[self.course.slug]))
+        self.assertContains(response, "ENROLL")
+
+    def test_detail_metadata_shows_module_count(self):
+        response = self.client.get(reverse("course_detail", args=[self.course.slug]))
+        self.assertContains(response, "MODULES")
+        # 2 modules created
+        self.assertContains(response, "02")
