@@ -1,17 +1,56 @@
-{% extends "base.html" %}
-{% block title %}
-Sign up
-{% endblock %}
+{% extends BASE_TEMPLATE %}
+{% block title %}Sign up{% endblock %}
+{% block breadcrumb %}CREATE ACCOUNT{% endblock %}
+
 {% block content %}
-<h1>
-    Sign up
-</h1>
-<div class="module">
-    <p>Enter your details to create an account:</p>
-    <form method="post">
-        {{ form.as_p }}
-        {% csrf_token %}
-        <p><input type="submit" value="Create my account"></p>
+{% if USE_FOUNDRY_UI %}
+<div class="max-w-md mx-auto mt-12">
+  <div class="panel p-8">
+    <h1 class="text-mono-label uppercase tracking-wider text-text-secondary mb-4">CREATE ACCOUNT</h1>
+    {% if form.errors %}
+      <div class="badge-danger mb-3">Please correct the errors below.</div>
+    {% endif %}
+    <form method="post" class="flex flex-col gap-3">
+      {% csrf_token %}
+      <label class="text-mono-label uppercase text-text-secondary" for="id_username">USERNAME</label>
+      <input class="input w-full mb-4" type="text" name="username" id="id_username"
+             value="{{ form.username.value|default:'' }}" required autofocus
+             maxlength="{{ form.username.field.max_length }}">
+      {% if form.username.errors %}
+        {% for error in form.username.errors %}
+          <p class="badge-danger mb-2">{{ error }}</p>
+        {% endfor %}
+      {% endif %}
+
+      <label class="text-mono-label uppercase text-text-secondary mt-2" for="id_password1">PASSWORD</label>
+      <input class="input w-full mb-4" type="password" name="password1" id="id_password1" required>
+      {% if form.password1.errors %}
+        {% for error in form.password1.errors %}
+          <p class="badge-danger mb-2">{{ error }}</p>
+        {% endfor %}
+      {% endif %}
+
+      <label class="text-mono-label uppercase text-text-secondary mt-2" for="id_password2">CONFIRM PASSWORD</label>
+      <input class="input w-full mb-4" type="password" name="password2" id="id_password2" required>
+      {% if form.password2.errors %}
+        {% for error in form.password2.errors %}
+          <p class="badge-danger mb-2">{{ error }}</p>
+        {% endfor %}
+      {% endif %}
+
+      <button type="submit" class="btn-primary w-full justify-center mt-2">REGISTER →</button>
     </form>
+  </div>
 </div>
+{% else %}
+<h1>Sign up</h1>
+<div class="module">
+  <p>Enter your details to create an account:</p>
+  <form method="post">
+    {{ form.as_p }}
+    {% csrf_token %}
+    <p><input type="submit" value="Create my account"></p>
+  </form>
+</div>
+{% endif %}
 {% endblock %}

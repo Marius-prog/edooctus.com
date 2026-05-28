@@ -428,6 +428,28 @@ from courses.models import Content, Text
 from django.contrib.contenttypes.models import ContentType
 
 
+@override_settings(USE_FOUNDRY_UI=True)
+class FoundryRegisterPageTests(TestCase):
+    """Foundry-style registration page — TDD red→green tests."""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse("student_registration")
+
+    def test_register_page_uses_foundry_base(self):
+        """Registration page must contain .panel wrapper and btn-primary button."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="panel')
+        self.assertContains(response, "btn-primary")
+
+    def test_register_page_has_foundry_topbar(self):
+        """Response must include the Foundry topbar command-palette trigger."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'aria-label="Open command palette"')
+
+
 @override_settings(CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}})
 class PlayerHtmxTests(TestCase):
     """M4: Foundry course player — HTMX content swap + mark-complete endpoint."""
