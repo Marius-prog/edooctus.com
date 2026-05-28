@@ -3,6 +3,9 @@ from . import views
 from django.views.decorators.cache import cache_page
 
 urlpatterns = [
+    path('dashboard/',
+         views.DashboardView.as_view(),
+         name='dashboard'),
     path('register/',
          views.StudentRegistrationView.as_view(),
          name='student_registration'),

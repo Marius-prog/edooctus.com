@@ -5,6 +5,39 @@ from courses.models import Course, Subject, Module
 from students.forms import CourseEnrollForm
 
 
+class DashboardViewTest(TestCase):
+    """Foundry dashboard view."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username="dashstudent", password="pw12345!")
+        self.url = reverse("dashboard")
+
+    def test_redirects_when_anonymous(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_renders_for_authenticated_user_with_no_data(self):
+        self.client.login(username="dashstudent", password="pw12345!")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "students/dashboard.html")
+        self.assertContains(response, "MY LEARNING")
+        self.assertContains(response, "CONTINUE LEARNING")
+        self.assertContains(response, "ACTIVITY")
+        self.assertContains(response, "RECOMMENDED FOR YOU")
+
+    def test_metrics_present_in_context(self):
+        self.client.login(username="dashstudent", password="pw12345!")
+        response = self.client.get(self.url)
+        self.assertIn("metric_enrolled", response.context)
+        self.assertIn("metric_completed", response.context)
+        self.assertIn("metric_streak", response.context)
+        self.assertIn("continue_learning", response.context)
+        self.assertIn("activity_bars", response.context)
+        self.assertIn("recommended", response.context)
+
+
 class StudentRegistrationTest(TestCase):
     """Test student registration functionality"""
 
