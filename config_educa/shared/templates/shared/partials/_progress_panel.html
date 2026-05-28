@@ -1,0 +1,17 @@
+{# HTMX swap target — course-progress panel after mark-complete POST.
+   Required context: course, percent, modules_done, modules_total #}
+<div id="progress-panel" class="panel p-4">
+  <div class="text-mono-label uppercase text-text-secondary mb-2">PROGRESS</div>
+  <div class="flex items-center gap-3 mb-3">
+    <div class="flex-1 h-1 bg-bg-active overflow-hidden" role="progressbar"
+         aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ percent }}"
+         style="border-radius:2px;">
+      <div class="h-full bg-accent transition-[width] duration-[240ms] ease-out"
+           style="width: {{ percent }}%"></div>
+    </div>
+    <span class="text-mono-data text-text-mono w-12 text-right">{{ percent }}%</span>
+  </div>
+  <div class="text-mono-label uppercase text-text-muted">
+    M{{ modules_done|stringformat:"02d" }} / M{{ modules_total|stringformat:"02d" }} COMPLETE
+  </div>
+</div>

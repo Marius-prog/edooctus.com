@@ -421,3 +421,68 @@ class CourseEnrollFormTest(TestCase):
         """Test form is invalid with non-existent course ID"""
         form = CourseEnrollForm(data={'course': 99999})
         self.assertFalse(form.is_valid())
+
+
+from django.test import override_settings
+from courses.models import Content, Text
+from django.contrib.contenttypes.models import ContentType
+
+
+@override_settings(CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}})
+class PlayerHtmxTests(TestCase):
+    """M4: Foundry course player — HTMX content swap + mark-complete endpoint."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="playerstu", password="pw12345!")
+        cls.owner = User.objects.create_user(username="playerinstr", password="pw12345!")
+        cls.subject = Subject.objects.create(title="Tests", slug="m4-tests")
+        cls.course = Course.objects.create(
+            owner=cls.owner, subject=cls.subject,
+            title="M4 Course", slug="m4-course", overview="player tests",
+        )
+        cls.course.students.add(cls.user)
+        cls.module = Module.objects.create(course=cls.course, title="M4 Module", description="d")
+        text_item = Text.objects.create(owner=cls.owner, title="Lesson 1", content="Hello world")
+        cls.content = Content.objects.create(
+            module=cls.module,
+            content_type=ContentType.objects.get_for_model(Text),
+            object_id=text_item.id,
+        )
+
+    def setUp(self):
+        self.client.login(username="playerstu", password="pw12345!")
+
+    def test_player_content_endpoint_returns_partial_on_htmx(self):
+        url = reverse("player_content", args=[self.course.id, self.content.id])
+        response = self.client.get(url, HTTP_HX_REQUEST="true")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "shared/partials/_player_content.html")
+        self.assertContains(response, "Hello world")
+        self.assertNotContains(response, "<header")
+
+    def test_player_content_requires_enrollment(self):
+        other = User.objects.create_user(username="otherstu", password="pw12345!")
+        self.client.login(username="otherstu", password="pw12345!")
+        url = reverse("player_content", args=[self.course.id, self.content.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_mark_complete_post_creates_module_progress(self):
+        from analytics.models import ModuleProgress
+        url = reverse("mark_complete", args=[self.course.id, self.module.id])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        mp = ModuleProgress.objects.get(user=self.user, module=self.module)
+        self.assertEqual(mp.status, "completed")
+
+    def test_mark_complete_returns_progress_partial(self):
+        url = reverse("mark_complete", args=[self.course.id, self.module.id])
+        response = self.client.post(url)
+        self.assertTemplateUsed(response, "shared/partials/_progress_panel.html")
+        self.assertContains(response, "100%")
+
+    def test_mark_complete_get_not_allowed(self):
+        url = reverse("mark_complete", args=[self.course.id, self.module.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 405)

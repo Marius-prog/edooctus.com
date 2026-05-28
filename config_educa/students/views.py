@@ -8,9 +8,13 @@ from django.views.generic.edit import FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
 from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404, render
+from django.http import HttpResponseNotAllowed
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from .forms import CourseEnrollForm
 from django.views.generic.list import ListView
-from courses.models import Course
+from courses.models import Course, Content, Module
 from django.views.generic.detail import DetailView
 import redis
 from django.conf import settings
@@ -250,3 +254,46 @@ class StudentCourseDetailView(LoginRequiredMixin, DetailView):
                     r.set(key, first_module.id)
         
         return context
+
+
+# -- M4 Player endpoints ------------------------------------------------------
+
+@login_required
+def player_content_view(request, course_id, content_id):
+    """HTMX target — returns the rendered content for one item in the player center pane."""
+    course = get_object_or_404(Course, id=course_id, students=request.user)
+    content = get_object_or_404(Content, id=content_id, module__course=course)
+    return render(request, "shared/partials/_player_content.html", {
+        "course": course,
+        "content": content,
+        "module": content.module,
+        "item": content.item,
+    })
+
+
+@login_required
+@require_POST
+def mark_complete_view(request, course_id, module_id):
+    """HTMX target — marks a module complete for the user, returns updated progress panel."""
+    from analytics.models import ModuleProgress
+
+    course = get_object_or_404(Course, id=course_id, students=request.user)
+    module = get_object_or_404(Module, id=module_id, course=course)
+    from django.utils import timezone
+    mp, _ = ModuleProgress.objects.get_or_create(user=request.user, module=module)
+    mp.status = "completed"
+    mp.completed_at = mp.completed_at or timezone.now()
+    mp.save(update_fields=["status", "completed_at"])
+
+    total = course.modules.count() or 1
+    done = ModuleProgress.objects.filter(
+        user=request.user, module__course=course, status="completed"
+    ).count()
+    percent = round((done / total) * 100)
+
+    return render(request, "shared/partials/_progress_panel.html", {
+        "course": course,
+        "percent": percent,
+        "modules_done": done,
+        "modules_total": total,
+    })

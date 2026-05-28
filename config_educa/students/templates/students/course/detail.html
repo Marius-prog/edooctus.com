@@ -1,14 +1,107 @@
-{% extends "base.html" %}
+{% extends BASE_TEMPLATE %}
 
-{% block title %}
-  {{ object.title }}
-{% endblock %}
+{% block title %}{{ object.title }}{% endblock %}
+{% block breadcrumb %}COURSES ▸ {{ object.title|upper }}{% endblock %}
 
 {% block content %}
-  <h1>
-    {{ object.title }}
-  </h1>
-  
+{% if USE_FOUNDRY_UI %}
+
+<div class="grid grid-cols-[240px_1fr_280px] gap-4 -m-6 h-[calc(100vh-3rem)]">
+
+  {# === LEFT RAIL — curriculum ============================================ #}
+  <aside class="bg-bg-panel border-r border-border-subtle flex flex-col overflow-y-auto"
+         aria-label="Course curriculum">
+    <div class="p-3 border-b border-border-subtle">
+      <div class="text-mono-label uppercase text-text-secondary">CURRICULUM</div>
+      <div class="text-mono-data text-text-mono mt-1">
+        {{ object.modules.count|stringformat:"02d" }} MODULES
+      </div>
+    </div>
+
+    <nav class="flex-1">
+      {% for m in object.modules.all %}
+        <div class="border-b border-border-subtle">
+          <div class="px-3 py-2 text-mono-label uppercase text-text-secondary">
+            M{{ m.order|add:1|stringformat:"02d" }} · {{ m.title }}
+          </div>
+          {% for c in m.contents.all %}
+            <a href="{% url 'student_course_detail_module' object.id m.id %}"
+               hx-get="{% url 'player_content' object.id c.id %}"
+               hx-target="#player-center"
+               hx-swap="innerHTML"
+               hx-push-url="true"
+               class="flex items-center h-9 pl-6 pr-3 gap-2 border-l-2 text-sm
+                      {% if module == m and forloop.first %}bg-bg-active border-accent text-text-primary
+                      {% else %}border-transparent text-text-secondary hover:bg-bg-hover hover:text-text-primary{% endif %}
+                      transition-colors duration-120">
+              <span class="text-mono-label text-text-muted shrink-0 w-10">{{ forloop.counter|stringformat:"02d" }}</span>
+              <span class="truncate flex-1">{{ c.item.title|default:"Untitled" }}</span>
+            </a>
+          {% empty %}
+            <div class="px-6 py-2 text-sm text-text-muted italic">No items in this module.</div>
+          {% endfor %}
+        </div>
+      {% empty %}
+        <div class="p-3 text-text-muted text-sm">Curriculum coming soon.</div>
+      {% endfor %}
+    </nav>
+
+    <div class="border-t border-border-subtle p-3" id="progress-panel-wrap">
+      {% include "shared/partials/_progress_panel.html" with course=object percent=0 modules_done=0 modules_total=object.modules.count %}
+    </div>
+  </aside>
+
+  {# === CENTER — content viewer ========================================== #}
+  <section id="player-center" class="overflow-y-auto p-6 max-w-[1024px] mx-auto w-full">
+    {% if module %}
+      {% with first_content=module.contents.first %}
+        {% if first_content %}
+          {% include "shared/partials/_player_content.html" with content=first_content item=first_content.item course=object module=module %}
+        {% else %}
+          <div class="panel p-6">
+            <h1 class="text-xl font-semibold mb-2">{{ module.title }}</h1>
+            <div class="text-text-secondary">{{ module.description|linebreaks }}</div>
+          </div>
+        {% endif %}
+      {% endwith %}
+    {% else %}
+      <div class="panel p-6">
+        <h1 class="text-xl font-semibold mb-2">{{ object.title }}</h1>
+        <p class="text-text-secondary">Select a module from the curriculum to begin.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  {# === RIGHT RAIL — notes + discussion =================================== #}
+  <aside class="bg-bg-panel border-l border-border-subtle p-4 overflow-y-auto"
+         aria-label="Notes and discussion">
+    <div class="text-mono-label uppercase text-text-secondary mb-2">NOTES</div>
+    <textarea name="notes" rows="8" placeholder="Take notes…"
+              class="input w-full min-h-[120px] resize-none"></textarea>
+    <div class="text-mono-label uppercase text-text-muted mt-1" id="notes-status">Local only — autosave coming in M6</div>
+
+    <div class="border-t border-border-subtle my-4"></div>
+
+    <div class="text-mono-label uppercase text-text-secondary mb-2">DISCUSSION</div>
+    <a href="{% url 'chat:course_chat_room' object.id %}" class="btn-ghost w-full justify-center">
+      JOIN CHAT →
+    </a>
+
+    <div class="border-t border-border-subtle my-4"></div>
+    <div class="text-mono-label uppercase text-text-secondary mb-2">SHORTCUTS</div>
+    <ul class="text-xs text-text-muted space-y-1 font-mono">
+      <li>j / k — navigate modules</li>
+      <li>m — mark complete</li>
+      <li>⌘K — palette</li>
+      <li>? — help</li>
+    </ul>
+  </aside>
+</div>
+
+{% else %}
+{# ------------ Original UI (flag OFF) — preserve existing behavior ------------ #}
+  <h1>{{ object.title }}</h1>
+
   {% if module %}
   <div class="resume-section">
     <h3>📚 Continue Learning</h3>
@@ -16,16 +109,14 @@
     <p><em>Your progress is automatically saved!</em></p>
   </div>
   {% endif %}
-  
+
   <div class="contents">
     <h3>Modules</h3>
     <ul id="modules">
       {% for m in object.modules.all %}
-        <li data-id="{{ m.id }}" {% if module == m %} class="selected"{% endif %}>
+        <li data-id="{{ m.id }}" {% if module == m %}class="selected"{% endif %}>
           <a href="{% url 'student_course_detail_module' object.id m.id %}">
-            <span>
-              Module <span class="order">{{ m.order|add:1 }}</span>
-            </span>
+            <span>Module <span class="order">{{ m.order|add:1 }}</span></span>
             <br>
             {{ m.title }}
           </a>
@@ -47,10 +138,10 @@
       {% endfor %}
     {% endif %}
   </div>
-  
-  <!-- Chat Section -->
+
   <div class="chat-section">
     <h3>Course Chat</h3>
     <p><a href="{% url 'chat:course_chat_room' object.id %}" class="button">Join Chat Room</a></p>
   </div>
+{% endif %}
 {% endblock %}
