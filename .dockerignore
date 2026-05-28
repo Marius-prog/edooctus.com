@@ -1,0 +1,60 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Python
+**/venv/
+**/env/
+*.pyc
+*.pyo
+*.pyd
+**/__pycache__/
+*.so
+*.egg
+*.egg-info
+dist/
+build/
+.Python
+config_educa/educa_fresh/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database
+*.sqlite3
+*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+
+# Temporary
+*.tmp
+*.bak
+*.backup
+
+# Claude
+.claude/

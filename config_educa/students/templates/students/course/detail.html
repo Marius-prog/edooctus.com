@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {{ object.title }}
+{% endblock %}
+
+{% block content %}
+  <h1>
+    {{ object.title }}
+  </h1>
+  
+  {% if module %}
+  <div class="resume-section">
+    <h3>📚 Continue Learning</h3>
+    <p>You're currently on: <strong>{{ module.title }}</strong></p>
+    <p><em>Your progress is automatically saved!</em></p>
+  </div>
+  {% endif %}
+  
+  <div class="contents">
+    <h3>Modules</h3>
+    <ul id="modules">
+      {% for m in object.modules.all %}
+        <li data-id="{{ m.id }}" {% if module == m %} class="selected"{% endif %}>
+          <a href="{% url 'student_course_detail_module' object.id m.id %}">
+            <span>
+              Module <span class="order">{{ m.order|add:1 }}</span>
+            </span>
+            <br>
+            {{ m.title }}
+          </a>
+        </li>
+      {% empty %}
+        <li>No modules yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="module">
+    {% if module %}
+      <h2>{{ module.title }}</h2>
+      {{ module.description|linebreaks }}
+      {% for content in module.contents.all %}
+        {% with item=content.item %}
+          <h3>{{ item.title }}</h3>
+          {{ item.render }}
+        {% endwith %}
+      {% endfor %}
+    {% endif %}
+  </div>
+  
+  <!-- Chat Section -->
+  <div class="chat-section">
+    <h3>Course Chat</h3>
+    <p><a href="{% url 'chat:course_chat_room' object.id %}" class="button">Join Chat Room</a></p>
+  </div>
+{% endblock %}

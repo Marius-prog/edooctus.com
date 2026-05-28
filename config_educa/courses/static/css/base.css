@@ -1,0 +1,168 @@
+/* Chat Styles */
+#chat {
+    height: 300px;
+    overflow-y: scroll;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #f9f9f9;
+}
+
+#chat-input {
+    display: flex;
+    gap: 10px;
+}
+
+#chat-message-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#chat-message-submit {
+    padding: 8px 16px;
+    background-color: #007cba;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#chat-message-submit:hover {
+    background-color: #005a87;
+}
+
+.message {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.message.me {
+    background-color: #dcf8c6;
+    text-align: right;
+}
+
+.message.other {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+}
+
+.message .date {
+    font-size: 0.8em;
+    color: #666;
+}
+
+.chat-section {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+}
+
+.button {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #007cba;
+    color: white !important;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    margin: 5px 0;
+}
+
+.button:hover {
+    background-color: #005a87;
+    color: white !important;
+    text-decoration: none;
+}
+
+/* Chat section styling */
+.chat-section {
+    margin-top: 20px;
+    padding: 15px;
+    border: 2px solid #007cba;
+    border-radius: 4px;
+    background-color: #f0f8ff;
+}
+
+.chat-section h3 {
+    color: #007cba;
+    margin-bottom: 10px;
+}
+
+/* Resume Section */
+.resume-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.resume-section h3 {
+    margin-top: 0;
+    color: white;
+}
+
+.resume-section p {
+    margin-bottom: 5px;
+}
+
+.resume-section em {
+    opacity: 0.9;
+    font-style: italic;
+}
+
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    line-height: 1.6;
+}
+
+h1, h2, h3 {
+    color: #333;
+}
+
+.module {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.contents ul {
+    list-style: none;
+    padding: 0;
+}
+
+.contents li {
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.contents li.selected {
+    background-color: #e7f3ff;
+}
+
+.contents a {
+    text-decoration: none;
+    color: #007cba;
+}
+
+.contents a:hover {
+    text-decoration: underline;
+}
+
+.progress-info {
+    color: #666;
+    font-style: italic;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}

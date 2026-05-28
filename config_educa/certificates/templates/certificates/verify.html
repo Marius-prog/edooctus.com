@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Certificate{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 50px auto; padding: 20px;">
+    <h1>Certificate Verification</h1>
+
+    {% if certificate %}
+        {% if is_valid %}
+            <div style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                <h2>✓ Valid Certificate</h2>
+                <p><strong>This certificate is valid and authentic.</strong></p>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                <h3>Certificate Details</h3>
+                <table style="width: 100%; margin-top: 15px;">
+                    <tr>
+                        <td style="padding: 10px; font-weight: bold;">Certificate ID:</td>
+                        <td style="padding: 10px;">{{ certificate.certificate_id }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; font-weight: bold;">Verification Code:</td>
+                        <td style="padding: 10px;">{{ certificate.verification_code }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; font-weight: bold;">Recipient:</td>
+                        <td style="padding: 10px;">{{ certificate.user.get_full_name|default:certificate.user.username }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; font-weight: bold;">Course:</td>
+                        <td style="padding: 10px;">{{ certificate.course.title }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; font-weight: bold;">Instructor:</td>
+                        <td style="padding: 10px;">{{ certificate.course.owner.get_full_name|default:certificate.course.owner.username }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; font-weight: bold;">Issue Date:</td>
+                        <td style="padding: 10px;">{{ certificate.issued_at|date:"F d, Y" }}</td>
+                    </tr>
+                </table>
+            </div>
+        {% else %}
+            <div style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                <h2>✗ Invalid Certificate</h2>
+                <p><strong>This certificate has been revoked.</strong></p>
+                {% if certificate.revoked_reason %}
+                    <p>Reason: {{ certificate.revoked_reason }}</p>
+                {% endif %}
+                {% if certificate.revoked_at %}
+                    <p>Revoked on: {{ certificate.revoked_at|date:"F d, Y" }}</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h2>⚠ Certificate Not Found</h2>
+            <p>No certificate found with verification code: <strong>{{ verification_code }}</strong></p>
+            <p>Please check the verification code and try again.</p>
+        </div>
+    {% endif %}
+
+    <div style="margin-top: 40px; text-align: center;">
+        <a href="{% url 'course_list' %}" style="display: inline-block; padding: 12px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 5px;">
+            Back to Courses
+        </a>
+    </div>
+</div>
+{% endblock %}

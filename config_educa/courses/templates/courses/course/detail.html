@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ object.title }} - Learn Online at Educto{% endblock %}
+
+{% block meta_description %}{{ object.overview|truncatewords:30 }}{% endblock %}
+
+{% block meta_keywords %}{{ object.title }}, {{ object.subject.title }}, online course, learn online, {{ object.subject.title }} course{% endblock %}
+
+{% block og_title %}{{ object.title }} - Educto{% endblock %}
+
+{% block og_description %}{{ object.overview|truncatewords:30 }}{% endblock %}
+
+{% block content %}
+{# JSON-LD Structured Data for Course #}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Course",
+  "name": "{{ object.title|escapejs }}",
+  "description": "{{ object.overview|escapejs }}",
+  "url": "https://educto.io/course/{{ object.slug }}/",
+  "provider": {
+    "@type": "Organization",
+    "name": "Educto",
+    "sameAs": "https://educto.io",
+    "url": "https://educto.io"
+  },
+  "instructor": {
+    "@type": "Person",
+    "name": "{{ object.owner.get_full_name|default:object.owner.username|escapejs }}"
+  },
+  "teaches": "{{ object.subject.title|escapejs }}",
+  "inLanguage": "en",
+  "datePublished": "{{ object.created|date:'c' }}",
+  "hasCourseInstance": {
+    "@type": "CourseInstance",
+    "courseMode": "online",
+    "courseWorkload": "PT{{ object.modules.count }}H"
+  }
+}
+</script>
+{% with subject=object.subject %}
+<div class="page-header">
+  <div class="container">
+    <div style="display: inline-block; margin-bottom: var(--spacing-sm);">
+      <a href="{% url 'course_list_subject' subject.slug %}" class="subject-badge">
+        {{ subject.title }}
+      </a>
+    </div>
+    <h1>{{ object.title }}</h1>
+    <p>{{ object.overview }}</p>
+  </div>
+</div>
+<div class="container">
+<div class="module">
+    <h2>Overview</h2>
+    <p>
+        <a href="{% url 'course_list_subject' subject.slug %}">
+            {{ subject.title }}</a>.
+        {{ object.modules.count }} modules.
+        Instructor: {{ object.owner.get_full_name }}
+    </p>
+    {{ object.overview|linebreaks }}
+    {% if request.user.is_authenticated %}
+    <form action="{% url 'student_enroll_course' %}" method="post">
+        {{ enroll_form }}
+        {% csrf_token %}
+        <input type="submit" value="Enroll now">
+    </form>
+    {% else %}
+    <a href="{% url 'student_registration' %}" class="button">Register to enroll</a>
+    {% endif %}
+
+</div>
+</div>
+{% endwith %}
+{% endblock %}

@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {# SEO Meta Tags #}
+    <title>{% block title %}Educto - Online Education Platform{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Educto - Learn from expert instructors with online courses in programming, design, business and more.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}online courses, education, learning, online education{% endblock %}">
+
+    {# Open Graph Tags #}
+    <meta property="og:title" content="{% block og_title %}Educto - Online Education Platform{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Learn from expert instructors with online courses{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://educto.io{{ request.path }}">
+    <meta property="og:site_name" content="Educto">
+
+    {# Twitter Card Tags #}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}Educto - Online Education Platform{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Learn from expert instructors with online courses{% endblock %}">
+
+    {# Canonical URL #}
+    <link rel="canonical" href="https://educto.io{{ request.path }}">
+
+    {# Inter Font #}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link href="{% static 'css/base.css' %}" rel="stylesheet">
+</head>
+<body>
+<div id="header">
+    <a href="/" class="logo">Educto.io</a>
+    <ul class="menu">
+        {% if request.user.is_authenticated %}
+        <li><a href="{% url 'logout' %}">Sign out</a></li>
+        {% else %}
+        <li><a href="{% url 'login' %}">Sign in</a></li>
+        {% endif %}
+    </ul>
+</div>
+<div id="content">
+    {% block content %}
+    {% endblock %}
+</div>
+{% block include_js %}
+{% endblock %}
+<script>
+      document.addEventListener('DOMContentLoaded', (event) => {
+        // DOM loaded
+        {% block domready %}
+        {% endblock %}
+      })
+
+</script>
+</body>
+</html>

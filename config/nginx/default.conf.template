@@ -1,0 +1,52 @@
+# Rate limiting zone (must be in http context)
+limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
+
+# upstream for uWSGI
+upstream uwsgi_app {
+    server unix:/code/config_educa/uwsgi_app.sock;
+}
+# upstream for Daphne
+upstream daphne {
+    server unix:/code/config_educa/daphne.sock;
+}
+server {
+    listen       80;
+    server_name www.educto.io educto.io;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen               443 ssl;
+    ssl_certificate      /code/config_educa/ssl/config_educa.pem;
+    ssl_certificate_key  /code/config_educa/ssl/config_educa.key;
+    server_name  www.educto.io educto.io;
+    error_log    stderr warn;
+    access_log   /dev/stdout main;
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self';" always;
+
+    # Apply rate limiting
+    limit_req zone=general burst=20 nodelay;
+
+    location / {
+        include      /etc/nginx/uwsgi_params;
+        uwsgi_pass   uwsgi_app;
+    }
+    location /ws/ {
+        proxy_http_version  1.1;
+        proxy_set_header    Upgrade $http_upgrade;
+        proxy_set_header    Connection "upgrade";
+        proxy_redirect      off;
+        proxy_pass          http://daphne;
+    }
+    location /static/ {
+        alias /code/config_educa/static/;
+    }
+    location /media/ {
+        alias /code/config_educa/media/;
+    }
+}
