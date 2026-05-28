@@ -84,5 +84,23 @@
       {% include "shared/components/_table.html" with headers=demo_table_headers rows=demo_table_rows numeric_cols=demo_table_numeric %}
     </div>
   </section>
+
+  <section class="mb-8">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">METRIC TILE</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="panel p-5">
+        <div class="text-mono-label uppercase text-text-secondary mb-2">EXAMPLE METRIC</div>
+        <div class="text-display">42</div>
+        <div class="text-mono-label uppercase text-text-muted mt-2">UNITS</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mb-8">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">BREADCRUMB</h2>
+    <div class="text-mono-label uppercase text-text-secondary">
+      CATALOG <span class="text-text-muted">▸</span> PYTHON <span class="text-text-muted">▸</span> <span class="text-accent">MODULE 01</span>
+    </div>
+  </section>
 </div>
 {% endblock %}

@@ -11,6 +11,16 @@ class ComponentsDebugViewTests(TestCase):
         response = self.client.get(reverse("shared:components_debug"))
         self.assertTemplateUsed(response, "shared/_components_debug.html")
 
+    def test_debug_page_shows_metric_tile_section(self):
+        response = self.client.get(reverse("shared:components_debug"))
+        self.assertContains(response, "METRIC TILE")
+        self.assertContains(response, 'class="text-display"')
+
+    def test_debug_page_shows_breadcrumb_section(self):
+        response = self.client.get(reverse("shared:components_debug"))
+        self.assertContains(response, "BREADCRUMB")
+        self.assertContains(response, "▸")
+
 
 from django.contrib.auth.models import User
 from django.test import override_settings
