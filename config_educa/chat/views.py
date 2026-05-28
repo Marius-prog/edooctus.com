@@ -21,5 +21,9 @@ def course_chat_room(request, course_id):
     return render(
         request,
         'chat/room.html',
-        {'course': course, 'latest_messages': latest_messages},
+        {
+            'course': course,
+            'latest_messages': latest_messages,
+            'enrolled_users': course.students.all().order_by('username'),
+        },
     )

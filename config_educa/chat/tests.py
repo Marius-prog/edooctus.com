@@ -459,3 +459,54 @@ class MessageModelTest(TestCase):
 
         course_messages = self.course.chat_messages.all()
         self.assertEqual(course_messages.count(), 2)
+
+
+from django.test import override_settings
+from django.urls import reverse
+
+
+@override_settings(USE_FOUNDRY_UI=True)
+class ChatRoomFoundryTests(TestCase):
+    """M5: Foundry chat room — two-column layout, Foundry message styling."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.owner = User.objects.create_user(username="chatinstr", password="pw12345!")
+        cls.student = User.objects.create_user(username="chatstu", password="pw12345!")
+        cls.subject = Subject.objects.create(title="ChatTopic", slug="m5-chat")
+        cls.course = Course.objects.create(
+            owner=cls.owner, subject=cls.subject,
+            title="M5 Chat Course", slug="m5-chat-course", overview="m5",
+        )
+        cls.course.students.add(cls.student)
+
+    def setUp(self):
+        self.client.login(username="chatstu", password="pw12345!")
+
+    def test_chat_room_uses_foundry_base_when_flag_on(self):
+        response = self.client.get(reverse("chat:course_chat_room", args=[self.course.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "foundry_base.html")
+
+    def test_chat_room_renders_two_column_layout(self):
+        response = self.client.get(reverse("chat:course_chat_room", args=[self.course.id]))
+        # Foundry headers we expect
+        self.assertContains(response, "ENROLLED")
+        self.assertContains(response, "CHAT")
+
+    def test_chat_room_lists_enrolled_users(self):
+        response = self.client.get(reverse("chat:course_chat_room", args=[self.course.id]))
+        # The current user should appear in the enrolled-users panel
+        self.assertContains(response, "chatstu")
+
+    def test_chat_room_input_present(self):
+        response = self.client.get(reverse("chat:course_chat_room", args=[self.course.id]))
+        # Message composer
+        self.assertContains(response, 'id="chat-message-input"')
+        self.assertContains(response, 'id="chat-message-submit"')
+
+    def test_chat_room_websocket_url_in_script(self):
+        response = self.client.get(reverse("chat:course_chat_room", args=[self.course.id]))
+        # JS bootstrap data still present (existing WS connection)
+        self.assertContains(response, "course-id")
+        self.assertContains(response, "request-user")
