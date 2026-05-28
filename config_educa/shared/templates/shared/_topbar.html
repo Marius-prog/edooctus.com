@@ -1,5 +1,13 @@
 {% load static %}
 <header class="h-12 bg-bg-panel border-b border-border-subtle flex items-center px-4 sticky top-0 z-30">
+  <button type="button"
+          id="sidebar-drawer-toggle"
+          x-data
+          @click="$dispatch('open-sidebar')"
+          class="md:hidden text-text-secondary mr-3"
+          aria-label="Open navigation menu">
+    ☰
+  </button>
   <a href="/" class="text-mono-label uppercase tracking-wider text-text-primary mr-2">EDUCTO</a>
   <span class="text-text-muted mx-2">▸</span>
   <span class="text-mono-label uppercase text-accent">{% block breadcrumb %}HOME{% endblock %}</span>

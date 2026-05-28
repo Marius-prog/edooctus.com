@@ -98,13 +98,19 @@ config_educa/theme/static/css/dist/
 config_educa/theme/static_src/node_modules/
 config_educa/theme/static_src/package-lock.json
 
-# Screenshots / large binaries dropped into docs/
-docs/*.png
-docs/*.jpg
-docs/*.jpeg
-docs/*.gif
-docs/*.mp4
-docs/*.zip
+# Screenshots / large binaries dropped anywhere in the tree
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mp4
+*.mov
+*.zip
+# But keep things we intentionally version
+!config_educa/static/**/*.png
+!config_educa/static/**/*.jpg
+!**/favicon*
+!**/logo*
 
 # =============================================================================
 # Duplicates / leftovers

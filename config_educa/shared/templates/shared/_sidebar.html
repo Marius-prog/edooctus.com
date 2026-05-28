@@ -1,7 +1,12 @@
 {% load static %}
-<aside class="w-14 hover:w-52 transition-[width] duration-120 ease-foundry
+<aside x-data="{ drawerOpen: false }"
+       @open-sidebar.window="drawerOpen = true"
+       @keydown.escape.window="drawerOpen = false"
+       :class="drawerOpen ? 'max-md:translate-x-0' : 'max-md:-translate-x-full'"
+       class="w-14 hover:w-52 transition-[width,transform] duration-120 ease-foundry
               bg-bg-panel border-r border-border-subtle
-              flex flex-col group sticky top-12 h-[calc(100vh-3rem)]"
+              flex flex-col group sticky top-12 h-[calc(100vh-3rem)]
+              max-md:fixed max-md:top-12 max-md:left-0 max-md:z-40 max-md:w-52 max-md:transform"
        aria-label="Primary navigation">
   <nav class="flex flex-col py-3 flex-1">
     <a href="/" class="nav-item" aria-label="Home">

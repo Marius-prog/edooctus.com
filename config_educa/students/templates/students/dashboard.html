@@ -13,7 +13,7 @@
       <h2 class="text-mono-label uppercase text-text-secondary">MY LEARNING</h2>
       <span class="text-mono-label uppercase text-text-muted">LIVE</span>
     </div>
-    <div class="grid grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
       <div class="panel p-5">
         <div class="text-mono-label uppercase text-text-secondary mb-2">ENROLLED</div>
@@ -86,7 +86,7 @@
       <span class="text-mono-label uppercase text-text-muted">TOP RATED</span>
     </div>
     {% if recommended %}
-    <div class="grid grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {% for c in recommended %}
       <a href="{{ c.get_absolute_url|default:'#' }}" class="panel p-4 hover:bg-bg-hover transition-colors duration-120 block">
         <div class="text-mono-label uppercase text-accent mb-2 truncate">{{ c.subject.title }}</div>

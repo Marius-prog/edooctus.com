@@ -24,6 +24,34 @@
   </div>
   {% include "shared/_command_palette.html" %}
   <div aria-live="polite" aria-atomic="true" class="sr-only" id="hx-live-region"></div>
+
+  <script>
+    // Announce HTMX swaps to the aria-live region for screen readers.
+    document.body.addEventListener('htmx:afterSwap', function (e) {
+      const live = document.getElementById('hx-live-region');
+      if (!live) return;
+      const target = e.target && e.target.id ? e.target.id : 'content';
+      live.textContent = 'Updated ' + target.replace(/-/g, ' ');
+    });
+
+    // Player keyboard shortcuts: j/k navigate curriculum, m mark complete.
+    document.addEventListener('keydown', function (e) {
+      const ae = document.activeElement;
+      if (ae && ['INPUT', 'TEXTAREA'].includes(ae.tagName)) return;
+      const rows = document.querySelectorAll('[hx-get*="/content/"]');
+      if (!rows.length) return;
+      const activeIdx = Array.from(rows).findIndex(r => r.classList.contains('bg-bg-active'));
+      if (e.key === 'j' || e.key === 'k') {
+        e.preventDefault();
+        const next = e.key === 'j' ? activeIdx + 1 : activeIdx - 1;
+        const target = rows[Math.max(0, Math.min(rows.length - 1, next))];
+        if (target) target.click();
+      } else if (e.key === 'm') {
+        const btn = document.querySelector('[hx-post*="/complete/"]');
+        if (btn) { e.preventDefault(); btn.click(); }
+      }
+    });
+  </script>
   {% block extra_body %}{% endblock %}
 </body>
 </html>
