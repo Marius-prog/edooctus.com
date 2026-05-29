@@ -467,7 +467,6 @@ class MessageModelTest(TestCase):
         self.assertEqual(course_messages.count(), 2)
 
 
-from django.test import override_settings
 from django.urls import reverse
 
 

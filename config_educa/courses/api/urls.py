@@ -17,8 +17,4 @@ urlpatterns = [
          views.CourseEnrollView.as_view(),
          name='course_enroll'),
     path('', include(router.urls)),
-    path('courses/<pk>/enroll/',
-         views.CourseEnrollView.as_view(),
-         name='course_enroll'),
-
 ]

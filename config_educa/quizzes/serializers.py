@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Quiz, Question, Choice, Submission, Answer, Rubric, RubricCriterion
+from .models import Quiz, Question, Choice, Submission, Answer
 
 
 class ChoiceSerializer(serializers.ModelSerializer):
@@ -48,17 +48,3 @@ class SubmissionSerializer(serializers.ModelSerializer):
                   "score_points", "score_pct", "passed", "status", "answers"]
         read_only_fields = ["score_points", "score_pct", "passed", "status",
                             "submitted_at", "user"]
-
-
-class RubricCriterionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RubricCriterion
-        fields = ["id", "criterion", "max_points", "order"]
-
-
-class RubricSerializer(serializers.ModelSerializer):
-    criteria = RubricCriterionSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Rubric
-        fields = ["id", "name", "description", "criteria"]
