@@ -2,6 +2,22 @@ from django.test import TestCase
 from django.urls import reverse
 
 
+class SecuritySettingsTests(TestCase):
+    """S5: base settings must default to a safe (non-debug) posture."""
+
+    def test_base_defaults_debug_off(self):
+        from config_educa.settings import base
+        self.assertFalse(base.DEBUG, "base.py must default DEBUG=False; local.py opts in.")
+
+    def test_production_entrypoints_default_to_prod(self):
+        from pathlib import Path
+        base_dir = Path(__file__).resolve().parent.parent / "config_educa"
+        for name in ("wsgi.py", "asgi.py"):
+            src = (base_dir / name).read_text()
+            self.assertIn("config_educa.settings.prod", src,
+                          f"{name} should default DJANGO_SETTINGS_MODULE to prod")
+
+
 class ComponentsDebugViewTests(TestCase):
     def test_debug_view_returns_200(self):
         response = self.client.get(reverse("shared:components_debug"))

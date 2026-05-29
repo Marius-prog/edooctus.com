@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Sandbox · {{ object.name }}{% endblock %}
+{% block content %}
+<div style="max-width:900px;margin:2rem auto;padding:0 1rem">
+  <h1 style="margin:0 0 .25rem 0">{{ object.name }}</h1>
+  <p style="color:#6b7280;margin:0 0 1.5rem 0">{{ object.description }}</p>
+
+  <form id="sandbox-form"
+        hx-post="{% url 'ai_tools:sandbox_run' %}"
+        hx-target="#sandbox-result"
+        hx-swap="innerHTML"
+        hx-indicator="#sandbox-spinner">
+    {% csrf_token %}
+    <input type="hidden" name="tool" value="{{ object.id }}">
+    <label for="prompt" style="font-weight:600;display:block;margin-bottom:.5rem">
+      Prompt
+    </label>
+    <textarea id="prompt" name="prompt" rows="8" required
+              placeholder="Ask the model anything..."
+              style="width:100%;padding:.75rem;border:1px solid #d1d5db;
+                     border-radius:.375rem;font-family:ui-monospace,monospace"></textarea>
+    <div style="display:flex;align-items:center;gap:1rem;margin-top:1rem">
+      <button type="submit"
+              style="background:#3b82f6;color:#fff;border:0;padding:.6rem 1.25rem;
+                     border-radius:.375rem;font-weight:600;cursor:pointer">
+        Run
+      </button>
+      <span id="sandbox-spinner" class="htmx-indicator" style="color:#6b7280">
+        Running…
+      </span>
+      <small style="color:#6b7280;margin-left:auto">
+        Provider: <strong>{{ object.get_provider_display }}</strong> ·
+        Model: <strong>{{ object.default_model|default:"default" }}</strong>
+      </small>
+    </div>
+  </form>
+
+  <div id="sandbox-result" style="margin-top:2rem"></div>
+</div>
+
+<script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+{% endblock %}

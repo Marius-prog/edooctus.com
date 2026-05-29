@@ -1,4 +1,4 @@
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.contrib.auth.models import User, AnonymousUser
 from channels.testing import WebsocketCommunicator
 from channels.routing import URLRouter
@@ -9,27 +9,32 @@ from chat.consumers import ChatConsumer
 import json
 import asyncio
 
+# In-memory channel layer keeps WebSocket broadcast tests hermetic
+# (no Redis required during CI).
+TEST_CHANNEL_LAYERS = {
+    'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'},
+}
 
+
+@override_settings(CHANNEL_LAYERS=TEST_CHANNEL_LAYERS)
 class ChatConsumerTest(TransactionTestCase):
     """Test WebSocket ChatConsumer with authentication and message handling"""
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        # Create test user
-        cls.user = User.objects.create_user(
+    def setUp(self):
+        # TransactionTestCase truncates DB between tests — use per-test setUp
+        # so FK rows always exist when the consumer looks them up.
+        self.user = User.objects.create_user(
             username='testuser',
             password='testpass123'
         )
 
-        # Create test course
-        cls.subject = Subject.objects.create(
+        self.subject = Subject.objects.create(
             title='Test Subject',
             slug='test-subject'
         )
-        cls.course = Course.objects.create(
-            owner=cls.user,
-            subject=cls.subject,
+        self.course = Course.objects.create(
+            owner=self.user,
+            subject=self.subject,
             title='Test Course',
             slug='test-course',
             overview='Test overview'
@@ -142,8 +147,9 @@ class ChatConsumerTest(TransactionTestCase):
             re_path(r'ws/chat/room/(?P<course_id>\d+)/$', ChatConsumer.as_asgi()),
         ])
 
-        # Create second user
+        # Create second user — must be enrolled to satisfy ChatConsumer auth.
         user2 = await User.objects.acreate(username='testuser2', password='pass')
+        await self.course.students.aadd(user2)
 
         # Create two connections
         communicator1 = WebsocketCommunicator(
@@ -296,6 +302,7 @@ class ChatConsumerTest(TransactionTestCase):
         comm1.scope['user'] = self.user
 
         user2 = await User.objects.acreate(username='disconnecttest', password='pass')
+        await self.course.students.aadd(user2)
         comm2 = WebsocketCommunicator(
             application,
             f"/ws/chat/room/{self.course.id}/"

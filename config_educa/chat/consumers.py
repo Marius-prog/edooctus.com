@@ -8,6 +8,8 @@ from chat.models import Message
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        from courses.models import Course
+
         self.user = self.scope['user']
 
         # Reject unauthenticated users
@@ -16,6 +18,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         self.id = self.scope['url_route']['kwargs']['course_id']
+
+        # Load course once and verify the user is enrolled (or owner/staff).
+        try:
+            self.course = await Course.objects.aget(id=int(self.id))
+        except (Course.DoesNotExist, ValueError, TypeError):
+            await self.close()
+            return
+
+        is_member = await self._user_can_access_course()
+        if not is_member:
+            await self.close()
+            return
+
         self.room_group_name = f'chat_{self.id}'
         # join room group
         await self.channel_layer.group_add(
@@ -24,18 +39,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # accept connection
         await self.accept()
 
-    async def disconnect(self, close_code):
-        # leave room group
-        await self.channel_layer.group_discard(
-            self.room_group_name, self.channel_name
-        )
+    async def _user_can_access_course(self):
+        """Allow course owner, staff, or enrolled students."""
+        if self.user.is_staff or self.course.owner_id == self.user.id:
+            return True
+        return await self.course.students.filter(id=self.user.id).aexists()
 
-    # persist message to database
+    async def disconnect(self, close_code):
+        # leave room group (only if we joined one)
+        group = getattr(self, 'room_group_name', None)
+        if group:
+            await self.channel_layer.group_discard(
+                group, self.channel_name
+            )
+
+    # persist message to database (reuses cached course FK)
     async def persist_message(self, message):
-        from courses.models import Course
-        course = await Course.objects.aget(id=int(self.id))
         await Message.objects.acreate(
-            user=self.user, course=course, content=message
+            user=self.user, course=self.course, content=message
         )
 
     # receive message from WebSocket

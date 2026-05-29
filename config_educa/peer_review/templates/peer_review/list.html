@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Assignments{% endblock %}
+{% block content %}
+<div style="max-width:760px;margin:2rem auto;padding:0 1rem">
+  <h1>Assignments</h1>
+  <ul style="list-style:none;padding:0">
+    {% for a in object_list %}
+    <li style="border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;
+               margin-bottom:.5rem">
+      <a href="{% url 'peer_review:detail' a.pk %}"
+         style="font-weight:600;color:#1f2937;text-decoration:none">{{ a.title }}</a>
+      <div style="color:#6b7280;font-size:.85rem;margin-top:.25rem">
+        Course: {{ a.course.title }}
+        {% if a.due_at %}· Due {{ a.due_at|date:"M j, Y" }}{% endif %}
+        · {{ a.peer_reviews_required }} peer reviews required
+      </div>
+    </li>
+    {% empty %}
+      <li style="text-align:center;padding:2rem;color:#6b7280">
+        No assignments yet.
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

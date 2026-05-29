@@ -5,7 +5,9 @@ from channels.security.websocket import AllowedHostsOriginValidator
 from channels.auth import AuthMiddlewareStack
 import chat.routing
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config_educa.settings')
+# Production entrypoint: default to prod settings unless explicitly overridden
+# (compose sets this anyway; the default keeps a stray server from booting in DEBUG).
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config_educa.settings.prod')
 django_asgi_app = get_asgi_application()
 
 application = ProtocolTypeRouter({

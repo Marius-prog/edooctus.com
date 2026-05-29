@@ -1,0 +1,25 @@
+{% if error %}
+  <div role="alert"
+       style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;
+              padding:1rem;border-radius:.375rem">
+    {{ error }}
+  </div>
+{% elif submission %}
+  <article style="border:1px solid #e5e7eb;border-radius:.5rem;padding:1.5rem;
+                  {% if submission.passed %}background:#ecfdf5{% else %}background:#fef2f2{% endif %}">
+    <h2 style="margin-top:0">
+      {% if submission.passed %}✅ Passed!{% else %}❌ Not yet{% endif %}
+    </h2>
+    <p style="font-size:1.25rem;margin:.25rem 0">
+      Score: <strong>{{ submission.score_points }}</strong> /
+      <strong>{{ quiz.total_points }}</strong>
+      ({{ submission.score_pct }}%)
+    </p>
+    <p style="color:#6b7280;margin:.25rem 0">
+      Pass mark: {{ quiz.pass_mark_pct }}%
+    </p>
+    {% if not submission.passed %}
+      <p>Review the material and try again.</p>
+    {% endif %}
+  </article>
+{% endif %}

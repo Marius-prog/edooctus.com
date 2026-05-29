@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}{{ object.title }}{% endblock %}
+{% block content %}
+<div style="max-width:760px;margin:2rem auto;padding:0 1rem">
+  <a href="{% url 'forum:list' %}" style="color:#6b7280;text-decoration:none">← Back</a>
+  <h1 style="margin:.5rem 0">{{ object.title }}</h1>
+  <p style="color:#6b7280;margin:0 0 1.5rem 0">
+    {{ object.author.username }} · {{ object.created|date:"M j, Y H:i" }} ·
+    {{ object.view_count }} views
+  </p>
+
+  <div id="posts">
+    {% for post in object.posts.all %}
+      {% if not post.is_hidden %}
+      <article style="border:1px solid #e5e7eb;border-radius:.5rem;
+              padding:1rem;margin-bottom:.75rem;
+              {% if post.is_solution %}border-color:#10b981;background:#ecfdf5{% endif %}">
+        <header style="display:flex;justify-content:space-between;align-items:center;
+                       margin-bottom:.5rem;font-size:.85rem;color:#6b7280">
+          <strong style="color:#1f2937">{{ post.author.username }}</strong>
+          <span>{{ post.created|date:"M j H:i" }}</span>
+        </header>
+        <div style="white-space:pre-wrap;line-height:1.5">{{ post.body }}</div>
+        <footer style="margin-top:.5rem;display:flex;gap:.5rem;font-size:.85rem">
+          <button type="button"
+                  hx-post="/forum/api/posts/{{ post.id }}/upvote/"
+                  hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+                  hx-swap="none"
+                  style="background:transparent;border:1px solid #d1d5db;
+                         padding:.25rem .5rem;border-radius:.25rem;cursor:pointer">
+            ▲ <span>{{ post.upvotes }}</span>
+          </button>
+          <button type="button"
+                  hx-post="/forum/api/posts/{{ post.id }}/flag/"
+                  hx-ext="json-enc"
+                  hx-vals='{"reason":"inappropriate"}'
+                  hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+                  hx-swap="none"
+                  hx-confirm="Flag this post?"
+                  style="background:transparent;border:1px solid #d1d5db;
+                         padding:.25rem .5rem;border-radius:.25rem;cursor:pointer;
+                         color:#dc2626">
+            ⚑ Flag
+          </button>
+        </footer>
+      </article>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  {% if not object.is_locked %}
+  <section style="margin-top:2rem;border-top:1px solid #e5e7eb;padding-top:1.5rem">
+    <h2 style="font-size:1.1rem">Add a reply</h2>
+    <form hx-post="/forum/api/posts/" hx-ext="json-enc"
+          hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+          hx-swap="none" hx-on::after-request="location.reload()">
+      {% csrf_token %}
+      <input type="hidden" name="topic" value="{{ object.id }}">
+      <textarea name="body" rows="4" required placeholder="Write your reply…"
+                style="width:100%;padding:.5rem;border:1px solid #d1d5db;
+                       border-radius:.375rem;margin-bottom:.5rem"></textarea>
+      <button type="submit" style="background:#3b82f6;color:#fff;border:0;
+              padding:.5rem 1rem;border-radius:.375rem;cursor:pointer;font-weight:600">
+        Post reply
+      </button>
+    </form>
+  </section>
+  {% else %}
+    <p style="color:#6b7280;text-align:center;margin-top:1rem">🔒 Topic locked</p>
+  {% endif %}
+</div>
+<script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+<script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/json-enc.js" defer></script>
+{% endblock %}

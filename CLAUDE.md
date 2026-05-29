@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Educto** (educto.io) - Production Django 5.1.3 online education platform with course management, student enrollment, and real-time WebSocket chat. Deployed via Docker Compose with PostgreSQL, Redis, Nginx, and separate WSGI (uWSGI) and ASGI (Daphne) servers.
+**Educto** (educto.io) - Production Django 4.2 (LTS) online education platform with course management, student enrollment, and real-time WebSocket chat. Deployed via Docker Compose with PostgreSQL, Redis, Nginx, and separate WSGI (uWSGI) and ASGI (Daphne) servers.
+
+> **Stack note (Nov 2025 audit)**: Project actually pins Django **4.2.18 LTS** + Channels **4.1** + Daphne **4.1**, *not* Django 5.1.3 as older docs claimed. LTS through April 2026; plan a Django 5.2 LTS migration before then. Production container runs Python **3.10.6**.
 
 ## Commands
 
@@ -105,6 +107,17 @@ gunzip -c ./backups/[file].sql.gz | docker-compose exec -T db psql -U postgres p
 - **Indexes**: Added on `course+-sent_on`, `user+-sent_on`
 - Room groups: `chat_{course_id}`
 
+### Foundry UI (feature/foundry-foundation)
+
+New Tailwind-based design system, gated behind an env flag so the legacy UI stays default:
+
+- **Toggle**: `USE_FOUNDRY_UI=true python manage.py runserver` (flag read in `settings/base.py`; off → legacy templates)
+- **Theme app**: `config_educa/theme/` (django-tailwind). Foundry templates extend `theme/templates/foundry_base.html`.
+- **CSS build**: `cd config_educa/theme/static_src && npm run build` (or `npm run start` to watch). Output: `theme/static/css/dist/styles.css`.
+- **Component catalog**: `/components/` (served by the `shared` app) renders all primitives.
+- **One-time setup**: `./scripts/bootstrap_foundry.sh` (installs deps, builds CSS, runs a smoke test).
+- IBM Plex Mono `.woff2` fonts go in `theme/static/fonts/`; falls back to the mono stack if absent.
+
 ### Settings Structure
 
 - `base.py` - Shared settings, now uses `os.environ.get('DJANGO_SECRET_KEY')` (NOT hardcoded)
@@ -160,7 +173,7 @@ Course.objects.select_related('owner', 'subject').prefetch_related('modules__con
 │   ├── db/                   # PostgreSQL data
 │   └── cache/                # Redis data
 ├── backups/                  # Database backups (auto-created by backup script)
-├── requirements.txt          # Python dependencies (Django 5.1.3, 52 packages)
+├── requirements.txt          # Python dependencies (Django 4.2.18 LTS)
 ├── docker-compose.yml        # Multi-container orchestration with resource limits
 ├── Dockerfile                # Application container definition
 ├── .env.example              # Environment variable template
@@ -227,16 +240,10 @@ await Message.objects.acreate(user=self.user, course=course, content=message)
 
 ### Testing
 
-**Test Structure**:
-- `courses/tests.py` - Comprehensive model and URL tests
-- Tests include: Model validation, M2M relationships, ordering, URL resolution
-- **New tests for optimizations**: `test_course_indexes_exist()`, `test_select_related_optimization()`
-- `chat/tests.py`, `students/tests.py` - Framework exists, needs implementation
-
-**Run specific tests**:
-```bash
-python manage.py test courses.tests.CourseModelTest.test_course_indexes_exist
-```
+- **Unit/integration**: Django's test runner, **not pytest** — `cd config_educa && python manage.py test`. Set `DJANGO_SETTINGS_MODULE=config_educa.settings.local` (CELERY_TASK_ALWAYS_EAGER makes tasks hermetic). Run one test: `python manage.py test courses.tests.CourseModelTest.test_course_indexes_exist`.
+- **E2E**: Playwright suite in `e2e/` — `cd e2e && npm install && npm test`. Requires a running server + seeded data: `python manage.py migrate && python manage.py seed_e2e`, then `runserver`. Base URL via `E2E_BASE_URL`.
+- **Live LLM tests**: gated behind `RUN_LIVE_LLM_TESTS=1` (cost money) — `python manage.py test ai_tools.test_live_llm`.
+- **CI**: `.github/workflows/ci.yml` runs Django tests (Python 3.10) → Playwright → optional live-LLM (manual dispatch). ⚠️ CI triggers on `main`/`develop`, but the repo default branch is `master` — PRs to `master` currently skip CI.
 
 ## Development Workflow
 
@@ -323,15 +330,15 @@ docker-compose logs -f [service]       # View service logs
 docker-compose restart [service]       # Restart specific service
 ```
 
-## Recent Improvements (October 2025)
+## Domain & Infrastructure Map
 
-See `IMPROVEMENTS_COMPLETE.md` for full details:
-
-- ✅ **Security**: SECRET_KEY moved to env var, ALLOWED_HOSTS fixed, WebSocket auth added, 52 dependencies updated (Django 5.1.3, Pillow 11.0, urllib3 2.2.3)
-- ✅ **Performance**: 6 database indexes added, 9 views optimized with select_related/prefetch_related (5-20x query reduction)
-- ✅ **Infrastructure**: Docker resource limits + health checks, Nginx security headers + rate limiting (10 req/s)
-- ✅ **Automation**: 4 deployment scripts created (update, migrate, deploy, backup)
-- ✅ **Testing**: Enhanced test coverage for optimizations
+- **Apps**: core (`courses`, `students`, `chat`) + `quizzes`, `ai_tools`, `forum`, `gamification`, `notifications`, `mentorship`, `peer_review`, `privacy`, `analytics`, `certificates`, `reviews`, `shared`, `theme`.
+- **Competency framework** on `courses`: `SkillDomain`, `Skill`, `CourseSkill`, `LearningOutcome`.
+- **Async**: Celery 5.4 + django-celery-beat (worker + beat services in compose). `CELERY_TASK_ALWAYS_EAGER=True` in `local.py`.
+- **AI seam**: `ai_tools/providers.py` — `OpenAIProvider` / `AnthropicProvider` / `FakeProvider` (lazy SDK import, safe fallback when keys missing). Per-user `UsageQuota` enforced in sandbox.
+- **Cross-app signals**: `gamification/signals.py` awards badges + creates notifications on enrollment/quiz-pass/certificate/forum events.
+- **GDPR**: consent records, Celery data-export pipeline, scheduled deletions; cookie banner in `shared/templates/shared/_cookie_banner.html`.
+- **Email**: env-driven SMTP backend in `prod.py`; `notify(channel='email')` dispatches via Celery.
 
 **Deployment requires**:
 1. Set `DJANGO_SECRET_KEY` in `.env` file

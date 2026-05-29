@@ -25,7 +25,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-only-for-local-development')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Safe-by-default: base stays off; local.py opts into DEBUG=True for development.
+DEBUG = False
 
 ALLOWED_HOSTS = ["educto.io", "www.educto.io", "127.0.0.1", "localhost"]
 
@@ -43,7 +44,6 @@ INSTALLED_APPS = [
     'django_extensions',
     'students.apps.StudentsConfig',
     'embed_video',
-    'debug_toolbar',
     'redisboard',
     'rest_framework',
     'chat',
@@ -55,10 +55,52 @@ INSTALLED_APPS = [
     'theme',
     'shared.apps.SharedConfig',
     'django_htmx',
+    # --- New domain apps (Nov 2025 scaffold) ---
+    'quizzes.apps.QuizzesConfig',
+    'ai_tools.apps.AIToolsConfig',
+    'forum.apps.ForumConfig',
+    'gamification.apps.GamificationConfig',
+    'notifications.apps.NotificationsConfig',
+    'mentorship.apps.MentorshipConfig',
+    'peer_review.apps.PeerReviewConfig',
+    'privacy.apps.PrivacyConfig',
+    'django_celery_beat',
 ]
 
+# Email backend — console for dev; override in prod.py with real SMTP / SES.
+EMAIL_BACKEND = os.environ.get(
+    'DJANGO_EMAIL_BACKEND',
+    'django.core.mail.backends.console.EmailBackend',
+)
+DEFAULT_FROM_EMAIL = os.environ.get('DJANGO_FROM_EMAIL', 'noreply@educto.io')
+
+# --- Celery ---------------------------------------------------------------
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/2')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/3')
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TIMEZONE = 'UTC'
+CELERY_TASK_ALWAYS_EAGER = os.environ.get('CELERY_EAGER', 'False').lower() == 'true'
+CELERY_TASK_EAGER_PROPAGATES = True
+# Periodic schedule — wire with django-celery-beat in prod for DB-driven cron.
+CELERY_BEAT_SCHEDULE = {
+    'expire_old_exports': {
+        'task': 'privacy.tasks.expire_old_exports',
+        'schedule': 60 * 60 * 6,  # every 6h
+    },
+    'process_scheduled_deletions': {
+        'task': 'privacy.tasks.process_scheduled_deletions',
+        'schedule': 60 * 60,  # every hour
+    },
+}
+
+# --- AI tool API keys (read from env; never commit) -----------------------
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+AI_TOOLS_DEFAULT_PROVIDER = os.environ.get('AI_TOOLS_DEFAULT_PROVIDER', 'fake')
+
 MIDDLEWARE = [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # 'django.middleware.cache.UpdateCacheMiddleware',

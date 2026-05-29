@@ -11,6 +11,8 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config_educa.settings')
+# Production entrypoint: default to prod settings unless explicitly overridden
+# (compose sets this anyway; the default keeps a stray server from booting in DEBUG).
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config_educa.settings.prod')
 
 application = get_wsgi_application()

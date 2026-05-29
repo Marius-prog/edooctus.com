@@ -1,0 +1,68 @@
+{% comment %}
+Cookie consent banner. Include in base.html:
+    {% include "shared/_cookie_banner.html" %}
+
+Posts to /privacy/api/consent/ when accepted/rejected.
+Stored in localStorage so it only shows once per browser.
+{% endcomment %}
+<div id="cookie-banner"
+     style="position:fixed;bottom:0;left:0;right:0;z-index:9999;
+            background:#1f2937;color:#f9fafb;padding:1rem;
+            display:none;box-shadow:0 -2px 10px rgba(0,0,0,0.25)">
+  <div style="max-width:1200px;margin:0 auto;display:flex;
+              flex-wrap:wrap;align-items:center;gap:1rem;justify-content:space-between">
+    <p style="margin:0;flex:1;min-width:260px;font-size:.95rem">
+      We use cookies to deliver and improve our learning platform.
+      You can accept all, reject non-essential, or
+      <a href="/privacy/policy/" style="color:#93c5fd;text-decoration:underline">read more</a>.
+    </p>
+    <div style="display:flex;gap:.5rem">
+      <button id="cookie-reject" type="button"
+              style="padding:.5rem 1rem;border-radius:.375rem;border:1px solid #4b5563;
+                     background:transparent;color:#f9fafb;cursor:pointer">
+        Reject non-essential
+      </button>
+      <button id="cookie-accept" type="button"
+              style="padding:.5rem 1rem;border-radius:.375rem;border:0;
+                     background:#3b82f6;color:#fff;cursor:pointer;font-weight:600">
+        Accept all
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const BANNER = document.getElementById('cookie-banner');
+  const STORAGE_KEY = 'educto.cookie_consent_v1';
+  if (!BANNER) return;
+
+  function decide(granted) {
+    localStorage.setItem(STORAGE_KEY, granted ? 'granted' : 'rejected');
+    BANNER.style.display = 'none';
+    // Only POST if the user is authenticated; for anonymous users we
+    // keep the choice locally and replay it after login.
+    const csrf = document.cookie.split('; ').find(c => c.startsWith('csrftoken='));
+    if (!csrf) return;
+    fetch('/privacy/api/consent/', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrf.split('=')[1],
+      },
+      body: JSON.stringify({
+        kind: 'cookies',
+        version: '2025-11-01',
+        granted: granted,
+      }),
+    }).catch(() => { /* silent — no UX regression on failure */ });
+  }
+
+  if (!localStorage.getItem(STORAGE_KEY)) {
+    BANNER.style.display = 'block';
+  }
+  document.getElementById('cookie-accept').addEventListener('click', () => decide(true));
+  document.getElementById('cookie-reject').addEventListener('click', () => decide(false));
+})();
+</script>

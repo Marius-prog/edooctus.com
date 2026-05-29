@@ -17,6 +17,7 @@ cd "$REPO_ROOT"
 # --- Python venv detection ---------------------------------------------------
 PYTHON_BIN=""
 for candidate in \
+  ../educto-venv-py312/bin/python \
   ../educto-cv-venv-LOCAL-ONLY/bin/python \
   ../educto-venv-LOCAL-ONLY/bin/python \
   config_educa/venv/bin/python \
