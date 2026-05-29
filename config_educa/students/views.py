@@ -220,9 +220,10 @@ class StudentCourseDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # get course object
-        course = self.get_object()
-        
+        # Reuse the already-fetched object (DetailView set self.object in get());
+        # calling get_object() again would re-run the course query + prefetches.
+        course = self.object
+
         if 'module_id' in self.kwargs:
             # get current module
             context['module'] = course.modules.get(

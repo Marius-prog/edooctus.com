@@ -1,3 +1,5 @@
+from unittest import mock
+
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -270,17 +272,19 @@ class StudentCourseListTest(TestCase):
         # Should NOT show non-enrolled course
         self.assertNotContains(response, 'Chemistry 101')
 
-    def test_course_list_uses_select_related(self):
-        """Test query optimization with select_related"""
+    @mock.patch("students.views.r")
+    def test_course_list_uses_select_related(self, mock_redis):
+        """Test query optimization with select_related (Redis mocked for isolation)."""
+        mock_redis.get.return_value = None
         self.client.login(username='student', password='studentpass')
 
         url = reverse('student_course_list')
 
-        # The view uses select_related, so accessing related objects
-        # should not cause additional queries
-        with self.assertNumQueries(6):  # Should be minimal queries
+        # The view uses select_related/prefetch_related, so accessing related
+        # objects should not cause additional queries: session, user, courses
+        # (+owner/subject join), modules prefetch.
+        with self.assertNumQueries(4):
             response = self.client.get(url)
-            # Accessing related objects shouldn't cause additional queries
             for course in response.context['object_list']:
                 _ = course.owner.username
                 _ = course.subject.title
@@ -357,8 +361,10 @@ class StudentCourseDetailTest(TestCase):
         self.assertContains(response, 'Module 1: Limits')
         self.assertContains(response, 'Module 2: Derivatives')
 
-    def test_course_detail_displays_first_module_by_default(self):
-        """Test first module is shown when no specific module requested"""
+    @mock.patch("students.views.r")
+    def test_course_detail_displays_first_module_by_default(self, mock_redis):
+        """Test first module is shown when no last-accessed module is recorded."""
+        mock_redis.get.return_value = None  # no remembered module
         self.client.login(username='student', password='studentpass')
 
         url = reverse('student_course_detail', args=[self.course.id])
@@ -377,14 +383,17 @@ class StudentCourseDetailTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['module'], self.module2)
 
-    def test_course_detail_prefetches_contents(self):
-        """Test query optimization with prefetch_related"""
+    @mock.patch("students.views.r")
+    def test_course_detail_prefetches_contents(self, mock_redis):
+        """Test query optimization with prefetch_related (Redis mocked)."""
+        mock_redis.get.return_value = None
         self.client.login(username='student', password='studentpass')
 
         url = reverse('student_course_detail', args=[self.course.id])
 
-        # Should use minimal queries
-        with self.assertNumQueries(6):  # Optimized with prefetch
+        # session, user, course (+owner/subject join), modules prefetch,
+        # contents prefetch. self.object is reused (no duplicate get_object).
+        with self.assertNumQueries(5):
             response = self.client.get(url)
             course = response.context['object']
             # Accessing modules shouldn't cause N+1 queries
