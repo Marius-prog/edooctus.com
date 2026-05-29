@@ -94,6 +94,10 @@ Thumbs.db
 node_modules/
 npm-debug.log*
 
+# Playwright e2e artifacts (report + per-run results)
+e2e/test-results/
+e2e/playwright-report/
+
 # Tailwind build artifacts
 config_educa/theme/static/css/dist/
 config_educa/theme/static_src/node_modules/
