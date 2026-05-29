@@ -88,6 +88,7 @@ jobs:
         env:
           DJANGO_SETTINGS_MODULE: config_educa.settings.local
           DJANGO_SECRET_KEY: ci-only-not-secret
+          E2E_TESTS: "1"   # disable debug toolbar so its overlay can't block clicks
         run: |
           nohup python manage.py runserver 127.0.0.1:8000 > /tmp/runserver.log 2>&1 &
           # Wait up to 30s for the server

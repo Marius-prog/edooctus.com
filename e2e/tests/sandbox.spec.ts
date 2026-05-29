@@ -14,7 +14,9 @@ async function login(page: import("@playwright/test").Page) {
   await page.goto("/accounts/login/");
   await page.fill("input[name='username']", USER);
   await page.fill("input[name='password']", PASS);
-  await page.click("button[type='submit']");
+  // Login template renders <input type=submit> (legacy) or <button type=submit>
+  // (foundry) depending on USE_FOUNDRY_UI — match either.
+  await page.click("[type='submit']");
 }
 
 test("sandbox runs an echo prompt and shows result", async ({ page }) => {

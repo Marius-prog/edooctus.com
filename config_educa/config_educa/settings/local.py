@@ -1,3 +1,5 @@
+import os
+
 from .base import *
 
 DEBUG = True
@@ -9,9 +11,11 @@ DATABASES = {
     }
 }
 
-# Debug Toolbar — local only
-INSTALLED_APPS += ['debug_toolbar']
-MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware'] + MIDDLEWARE
+# Debug Toolbar — local only, and NOT during E2E: its fixed overlay intercepts
+# pointer events over the cookie banner and other fixed UI, breaking Playwright.
+if os.environ.get("E2E_TESTS") != "1":
+    INSTALLED_APPS += ['debug_toolbar']
+    MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware'] + MIDDLEWARE
 
 # Celery: run tasks inline during dev / tests — no worker needed.
 CELERY_TASK_ALWAYS_EAGER = True
