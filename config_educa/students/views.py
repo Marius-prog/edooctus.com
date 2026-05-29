@@ -7,9 +7,8 @@ from django.contrib.auth import authenticate, login
 from django.views.generic.edit import FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, render
-from django.http import HttpResponseNotAllowed
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from .forms import CourseEnrollForm

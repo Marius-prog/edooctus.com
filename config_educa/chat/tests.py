@@ -6,7 +6,6 @@ from django.urls import re_path
 from courses.models import Course, Subject
 from chat.models import Message
 from chat.consumers import ChatConsumer
-import json
 import asyncio
 
 # In-memory channel layer keeps WebSocket broadcast tests hermetic

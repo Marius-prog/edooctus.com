@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.urls import path, include
-from rest_framework import viewsets, permissions, serializers, status
+from rest_framework import viewsets, permissions, serializers
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter

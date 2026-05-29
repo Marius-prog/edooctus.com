@@ -1,5 +1,4 @@
 from django.template import Template, Context
-from django.utils import timezone
 
 
 def check_course_completion(user, course):

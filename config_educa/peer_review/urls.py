@@ -1,5 +1,5 @@
 from django.urls import path, include
-from rest_framework import viewsets, permissions, serializers, status
+from rest_framework import viewsets, permissions, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter

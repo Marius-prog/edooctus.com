@@ -6,7 +6,7 @@ from rest_framework.routers import DefaultRouter
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 
-from .models import Badge, UserBadge, PointsTransaction, user_points, leaderboard
+from .models import Badge, UserBadge, user_points, leaderboard
 
 app_name = "gamification"
 

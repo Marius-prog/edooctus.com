@@ -51,8 +51,8 @@ try:
             return
         from notifications.models import notify
         if instance.passed:
-            ub = award_badge(instance.user, "quiz-passed",
-                             awarded_for=f"Passed {instance.quiz.title}")
+            award_badge(instance.user, "quiz-passed",
+                        awarded_for=f"Passed {instance.quiz.title}")
             notify(
                 instance.user, "quiz_graded",
                 title=f"\u2705 You passed {instance.quiz.title}",

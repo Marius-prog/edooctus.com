@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import F
-from django.shortcuts import get_object_or_404
 from django.views.generic import ListView, DetailView
 
 from shared.permissions import IsOwnerOrReadOnly

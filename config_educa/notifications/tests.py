@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from .models import Notification, NotificationPreference, notify, unread_count
+from .models import NotificationPreference, notify, unread_count
 
 
 class NotificationTests(TestCase):

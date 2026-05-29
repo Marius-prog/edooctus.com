@@ -1,8 +1,6 @@
 from django.test import TestCase
-from .models import Course, User, Subject, Module, Text, File, Image, Video
+from .models import Course, User, Subject, Module
 from django.utils import timezone
-from django.contrib.contenttypes.models import ContentType
-from django.test import TestCase
 from django.urls import reverse, resolve
 from . import views
 

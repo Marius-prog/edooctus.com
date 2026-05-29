@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Quiz, Question, Choice, Submission, Answer, Rubric, RubricCriterion
+from .models import Quiz, Question, Choice, Submission, Rubric, RubricCriterion
 
 
 class ChoiceInline(admin.TabularInline):
