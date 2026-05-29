@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'mentorship.apps.MentorshipConfig',
     'peer_review.apps.PeerReviewConfig',
     'privacy.apps.PrivacyConfig',
+    'honeypot.apps.HoneypotConfig',
     'django_celery_beat',
 ]
 
@@ -93,7 +94,17 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'privacy.tasks.process_scheduled_deletions',
         'schedule': 60 * 60,  # every hour
     },
+    'honeypot_analyze': {
+        'task': 'honeypot.analyze',
+        'schedule': 60 * 60,  # hourly threat-intel aggregation
+    },
 }
+
+# --- Honeypot -------------------------------------------------------------
+# Comma-separated list of addresses that receive intrusion alerts (empty = none).
+SECURITY_ALERT_EMAILS = [
+    e.strip() for e in os.environ.get('SECURITY_ALERT_EMAILS', '').split(',') if e.strip()
+]
 
 # --- AI tool API keys (read from env; never commit) -----------------------
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
@@ -102,6 +113,9 @@ AI_TOOLS_DEFAULT_PROVIDER = os.environ.get('AI_TOOLS_DEFAULT_PROVIDER', 'fake')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Honeypot probe tripwire — fail-open, runs early so scanner probes are
+    # logged before the rest of the stack. No-op for all legitimate paths.
+    'honeypot.middleware.HoneypotProbeMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # 'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.common.CommonMiddleware',

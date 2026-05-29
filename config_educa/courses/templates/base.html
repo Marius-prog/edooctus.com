@@ -1,4 +1,4 @@
-{% load static %}
+{% load static honeypot_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -58,5 +58,6 @@
 
 </script>
 {% include "shared/_cookie_banner.html" %}
+{% honeypot_tripwire %}
 </body>
 </html>

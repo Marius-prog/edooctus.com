@@ -7,6 +7,7 @@ from django.contrib.sitemaps.views import sitemap
 
 from courses.views import CourseListView, robots_txt
 from courses.sitemaps import CourseSitemap, SubjectSitemap, StaticViewSitemap
+from honeypot import views as honeypot_views
 
 # Define sitemaps
 sitemaps = {
@@ -21,6 +22,17 @@ urlpatterns = [
     path('accounts/logout/', auth_views.LogoutView.as_view(),
          name='logout'),
     path('(K+J+u.dt8/', admin.site.urls),
+
+    # --- Honeypot lures (decoys; real admin is the obfuscated path above) ---
+    # Placed before the real `api/` include so the decoy isn't shadowed.
+    path('admin/', honeypot_views.fake_admin_login),
+    path('wp-login.php', honeypot_views.fake_admin_login),
+    path('wp-admin/', honeypot_views.fake_admin_login),
+    path('.env', honeypot_views.exposed_file),
+    path('backup.sql', honeypot_views.exposed_file),
+    path('api/v1/users', honeypot_views.decoy_api_users),
+    path('honeypot/', include('honeypot.urls')),
+
     path('course/', include('courses.urls')),
     path('', CourseListView.as_view(), name='course_list'),
     path('students/', include('students.urls')),

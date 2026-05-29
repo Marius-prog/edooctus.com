@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+{# Decoy admin login — a Django-admin lookalike. Submitting never authenticates. #}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Log in | Django site admin</title>
+  <style>
+    body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f5f6f7;color:#333}
+    #header{background:#417690;color:#fff;padding:15px 40px}
+    #header h1{margin:0;font-size:18px;font-weight:300}
+    .login #container{width:28em;margin:5em auto;background:#fff;border:1px solid #ccc;border-radius:4px}
+    .login #content{padding:20px 30px 30px}
+    .form-row{padding:8px 0}
+    label{display:block;font-size:13px;color:#666;margin-bottom:4px}
+    input[type=text],input[type=password]{width:100%;box-sizing:border-box;padding:8px;border:1px solid #ccc;border-radius:4px}
+    .submit-row{padding-top:14px}
+    button{background:#417690;color:#fff;border:0;padding:10px 15px;border-radius:4px;cursor:pointer;width:100%}
+    .errornote{background:#fee;border:1px solid #e6a1a1;color:#b94a48;padding:10px;border-radius:4px;font-size:13px}
+  </style>
+</head>
+<body class="login">
+  <div id="header"><h1>Django administration</h1></div>
+  <div id="container">
+    <div id="content">
+      {% if error %}<p class="errornote">{{ error }}</p>{% endif %}
+      <form method="post" action="">
+        <div class="form-row">
+          <label for="id_username">Username:</label>
+          <input type="text" name="username" id="id_username" autofocus>
+        </div>
+        <div class="form-row">
+          <label for="id_password">Password:</label>
+          <input type="password" name="password" id="id_password">
+        </div>
+        <div class="submit-row"><button type="submit">Log in</button></div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

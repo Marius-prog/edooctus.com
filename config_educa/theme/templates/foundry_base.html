@@ -1,4 +1,4 @@
-{% load static django_htmx %}
+{% load static django_htmx honeypot_tags %}
 <!doctype html>
 <html lang="en" class="dark">
 <head>
@@ -54,5 +54,6 @@
   </script>
   {% block extra_body %}{% endblock %}
 {% include "shared/_cookie_banner.html" %}
+{% honeypot_tripwire %}
 </body>
 </html>

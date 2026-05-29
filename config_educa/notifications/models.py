@@ -39,6 +39,7 @@ class Notification(models.Model):
         ("certificate_ready", "Certificate Ready"),
         ("quiz_graded", "Quiz Graded"),
         ("mentor_message", "Mentor Message"),
+        ("security_alert", "Security Alert"),
         ("system", "System"),
     ]
 
