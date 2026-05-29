@@ -72,7 +72,6 @@ psycopg2==2.9.10
 redis==5.0.8                  # absorbs old aioredis API
 hiredis==3.0.0
 msgpack==1.0.8
-pymemcache==4.0.0
 
 # --- Security / Crypto --------------------------------------------------------
 cryptography==43.0.3          # fixes CVE-2023-50782 + later
@@ -99,12 +98,8 @@ packaging==24.1
 six==1.16.0
 wrapt==1.16.0
 
-# --- Dev / Lint (consider moving to requirements-dev.txt) ---------------------
-flake8==7.1.1
-pycodestyle==2.12.1
-pyflakes==3.2.0
-mccabe==0.7.0
-
 # Removed (no longer needed):
 #   aioredis              -> superseded by redis>=4.2 (channels-redis 4.x)
 #   async-timeout         -> stdlib asyncio.timeout since Python 3.11
+#   flake8/pycodestyle/pyflakes/mccabe -> project lints with ruff; no flake8 config or CI lint job
+#   pymemcache            -> only used by the removed commented memcached CACHES block (active cache is Redis)
