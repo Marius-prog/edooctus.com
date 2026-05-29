@@ -196,21 +196,6 @@ class ContentOrderView(CsrfExemptMixin,
         return self.render_json_response({'saved': 'OK'})
 
 
-# class CourseListView(TemplateResponseMixin, View):
-#     model = Course
-#     template_name = 'courses/course/list.html'
-#
-#     def get(self, request, subject=None):
-#         subjects = Subject.objects.annotate(
-#             total_courses=Count('courses'))
-#         courses = Course.objects.annotate(
-#             total_modules=Count('modules'))
-#         if subject:
-#             subject = get_object_or_404(Subject, slug=subject)
-#             courses = courses.filter(subject=subject)
-#         return self.render_to_response({'subjects': subjects,
-#                                         'subject': subject,
-#                                         'courses': courses})
 class CourseListView(TemplateResponseMixin, View):
     model = Course
     template_name = 'courses/course/list.html'

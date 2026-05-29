@@ -115,9 +115,7 @@ MIDDLEWARE = [
     # logged before the rest of the stack. No-op for all legitimate paths.
     'honeypot.middleware.HoneypotProbeMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    # 'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.cache.FetchFromCacheMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -162,13 +160,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ]
 }
-
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
-#         'LOCATION': '127.0.0.1:11211',
-#     }
-# }
 
 CACHES = {
     'default': {
@@ -220,12 +211,6 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
-# STATICFILES_DIRS = [
-#     BASE_DIR / "static/",
-#     # Add additional directories here
-# ]
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -235,7 +220,6 @@ LOGIN_REDIRECT_URL = reverse_lazy('dashboard')
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-# MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 CACHE_MIDDLEWARE_ALIAS = 'default'
 CACHE_MIDDLEWARE_SECONDS = 60 * 15  # 15 minutes
@@ -245,7 +229,6 @@ INTERNAL_IPS = [
     '127.0.0.1',
 ]
 STATIC_ROOT = BASE_DIR / 'static'
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Redis settings for module tracking
 REDIS_HOST = 'localhost'

@@ -420,7 +420,7 @@ class MessageModelTest(TestCase):
 
     def test_message_protect_on_delete(self):
         """Test that deleting user or course is protected when messages exist"""
-        message = Message.objects.create(
+        Message.objects.create(
             user=self.user,
             course=self.course,
             content='Protected message'

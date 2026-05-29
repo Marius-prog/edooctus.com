@@ -37,10 +37,6 @@ class SubjectModelTest(TestCase):
         expected_object_name = f'{subject.title}'
         self.assertEqual(expected_object_name, str(subject))
 
-    # def test_ordering(self):
-    #     subjects = Subject.objects.all()
-    #     self.assertQuerysetEqual(subjects, ['<Subject: English Literature>', '<Subject: Mathematics>'])
-
     def test_slug_field_is_unique(self):
         subject = Subject(title='Mathematics', slug='mathematics')
         with self.assertRaises(Exception):
