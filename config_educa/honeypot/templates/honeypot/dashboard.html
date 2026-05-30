@@ -1,0 +1,113 @@
+{% extends "foundry_base.html" %}
+
+{% block title %}Honeypot{% endblock %}
+{% block breadcrumb %}SECURITY ▸ HONEYPOT{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl">
+
+  {# === METRIC TILES ====================================================== #}
+  <section class="mb-8">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-mono-label uppercase text-text-secondary">THREAT INTEL</h2>
+      <span class="text-mono-label uppercase text-text-muted">LIVE</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div class="panel p-5">
+        <div class="text-mono-label uppercase text-text-secondary mb-2">EVENTS 24H</div>
+        <div class="text-display text-text-mono font-mono">{{ events_24h|stringformat:"02d" }}</div>
+      </div>
+      <div class="panel p-5">
+        <div class="text-mono-label uppercase text-text-secondary mb-2">EVENTS 7D</div>
+        <div class="text-display text-text-mono font-mono">{{ events_7d|stringformat:"02d" }}</div>
+      </div>
+      <div class="panel p-5">
+        <div class="text-mono-label uppercase text-text-secondary mb-2">UNIQUE IPS</div>
+        <div class="text-display text-text-mono font-mono">{{ unique_ips|stringformat:"02d" }}</div>
+      </div>
+      <div class="panel p-5">
+        <div class="text-mono-label uppercase text-text-secondary mb-2">DECOY HITS</div>
+        <div class="text-display text-text-mono font-mono">{{ decoy_hits|stringformat:"02d" }}</div>
+      </div>
+      <div class="panel p-5">
+        <div class="text-mono-label uppercase text-text-secondary mb-2">TOTAL</div>
+        <div class="text-display text-text-mono font-mono">{{ total_events|stringformat:"02d" }}</div>
+      </div>
+    </div>
+  </section>
+
+  {# === ACTIVITY (14d) ==================================================== #}
+  <section class="mb-8">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">ACTIVITY · 14 DAYS</h2>
+    <div class="panel p-5">
+      <div class="flex items-end gap-1" style="height:32px">
+        {% for bar in activity_bars %}
+        <div class="flex-1 bg-accent" title="{{ bar.v }} events"
+             style="height:{{ bar.h }}px;border-radius:1px"></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    {# === BY TYPE ===================================================== #}
+    <section>
+      <h2 class="text-mono-label uppercase text-text-secondary mb-3">BY TYPE</h2>
+      <div class="panel">
+        {% for row in by_type %}
+        <div class="flex items-center justify-between p-3 border-b border-border-subtle last:border-b-0">
+          <span class="text-mono-label uppercase text-text-primary">{{ row.event_type }}</span>
+          <span class="text-mono-data text-text-mono">{{ row.n }}</span>
+        </div>
+        {% empty %}
+        <div class="p-4 text-text-muted text-sm">No events recorded.</div>
+        {% endfor %}
+      </div>
+    </section>
+
+    {# === TOP SOURCE IPS ============================================== #}
+    <section>
+      <h2 class="text-mono-label uppercase text-text-secondary mb-3">TOP SOURCE IPS</h2>
+      <div class="panel">
+        {% for row in top_ips %}
+        <div class="flex items-center justify-between p-3 border-b border-border-subtle last:border-b-0">
+          <span class="text-mono-data text-text-primary">{{ row.ip_address }}</span>
+          <span class="text-mono-data text-text-mono">{{ row.n }}</span>
+        </div>
+        {% empty %}
+        <div class="p-4 text-text-muted text-sm">No source IPs yet.</div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  {# === RECENT EVENTS ==================================================== #}
+  <section class="mb-8">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">RECENT EVENTS</h2>
+    <div class="panel overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-mono-label uppercase text-text-muted text-left border-b border-border-subtle">
+            <th class="p-3">WHEN</th><th class="p-3">TYPE</th><th class="p-3">IP</th>
+            <th class="p-3">PATH</th><th class="p-3">USERNAME</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in recent %}
+          <tr class="border-b border-border-subtle last:border-b-0">
+            <td class="p-3 text-mono-data text-text-secondary whitespace-nowrap">{{ e.created|date:"m-d H:i" }}</td>
+            <td class="p-3 text-mono-label uppercase text-text-primary">{{ e.event_type }}</td>
+            <td class="p-3 text-mono-data text-text-mono">{{ e.ip_address|default:"-" }}</td>
+            <td class="p-3 text-text-secondary truncate" style="max-width:18rem">{{ e.path }}</td>
+            <td class="p-3 text-text-secondary">{{ e.attempted_username|default:"-" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="p-4 text-text-muted">No events recorded yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Badges & Leaderboard{% endblock %}
+{% block content %}
+<div style="max-width:1000px;margin:2rem auto;padding:0 1rem;
+            display:grid;grid-template-columns:2fr 1fr;gap:2rem">
+
+  <section>
+    <header style="display:flex;justify-content:space-between;align-items:center">
+      <h1 style="margin:0">Your badges</h1>
+      <div style="font-size:1.5rem;font-weight:700;color:#3b82f6">
+        {{ my_points }} pts
+      </div>
+    </header>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+                gap:.75rem;margin-top:1rem">
+      {% for b in all_badges %}
+        {% if b.id in earned_ids %}
+        <div title="{{ b.description }}"
+             style="border:2px solid #10b981;background:#ecfdf5;border-radius:.5rem;
+                    padding:1rem;text-align:center">
+          <div style="font-size:2.5rem">{{ b.icon|default:"🏆" }}</div>
+          <div style="font-weight:600;margin-top:.5rem">{{ b.name }}</div>
+          <div style="color:#059669;font-size:.85rem;margin-top:.25rem">
+            +{{ b.points_reward }} pts
+          </div>
+        </div>
+        {% else %}
+        <div title="{{ b.description }}"
+             style="border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;
+                    text-align:center;opacity:.4;filter:grayscale(1)">
+          <div style="font-size:2.5rem">{{ b.icon|default:"🏆" }}</div>
+          <div style="font-weight:600;margin-top:.5rem">{{ b.name }}</div>
+          <div style="color:#6b7280;font-size:.85rem;margin-top:.25rem">Locked</div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <aside>
+    <h2 style="margin-top:0">Leaderboard</h2>
+    <ol style="padding-left:1.25rem">
+      {% for row in leaderboard %}
+      <li style="margin-bottom:.5rem">
+        <strong>{{ row.user__username }}</strong>
+        <span style="color:#6b7280">— {{ row.total }} pts</span>
+      </li>
+      {% empty %}
+        <li style="color:#6b7280">No scores yet.</li>
+      {% endfor %}
+    </ol>
+  </aside>
+</div>
+{% endblock %}

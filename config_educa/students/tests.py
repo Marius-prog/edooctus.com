@@ -1,8 +1,43 @@
+from unittest import mock
+
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from courses.models import Course, Subject, Module
 from students.forms import CourseEnrollForm
+
+
+class DashboardViewTest(TestCase):
+    """Foundry dashboard view."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username="dashstudent", password="pw12345!")
+        self.url = reverse("dashboard")
+
+    def test_redirects_when_anonymous(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_renders_for_authenticated_user_with_no_data(self):
+        self.client.login(username="dashstudent", password="pw12345!")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "students/dashboard.html")
+        self.assertContains(response, "MY LEARNING")
+        self.assertContains(response, "CONTINUE LEARNING")
+        self.assertContains(response, "ACTIVITY")
+        self.assertContains(response, "RECOMMENDED FOR YOU")
+
+    def test_metrics_present_in_context(self):
+        self.client.login(username="dashstudent", password="pw12345!")
+        response = self.client.get(self.url)
+        self.assertIn("metric_enrolled", response.context)
+        self.assertIn("metric_completed", response.context)
+        self.assertIn("metric_streak", response.context)
+        self.assertIn("continue_learning", response.context)
+        self.assertIn("activity_bars", response.context)
+        self.assertIn("recommended", response.context)
 
 
 class StudentRegistrationTest(TestCase):
@@ -237,17 +272,19 @@ class StudentCourseListTest(TestCase):
         # Should NOT show non-enrolled course
         self.assertNotContains(response, 'Chemistry 101')
 
-    def test_course_list_uses_select_related(self):
-        """Test query optimization with select_related"""
+    @mock.patch("students.views.r")
+    def test_course_list_uses_select_related(self, mock_redis):
+        """Test query optimization with select_related (Redis mocked for isolation)."""
+        mock_redis.get.return_value = None
         self.client.login(username='student', password='studentpass')
 
         url = reverse('student_course_list')
 
-        # The view uses select_related, so accessing related objects
-        # should not cause additional queries
-        with self.assertNumQueries(6):  # Should be minimal queries
+        # The view uses select_related/prefetch_related, so accessing related
+        # objects should not cause additional queries: session, user, courses
+        # (+owner/subject join), modules prefetch.
+        with self.assertNumQueries(4):
             response = self.client.get(url)
-            # Accessing related objects shouldn't cause additional queries
             for course in response.context['object_list']:
                 _ = course.owner.username
                 _ = course.subject.title
@@ -324,8 +361,10 @@ class StudentCourseDetailTest(TestCase):
         self.assertContains(response, 'Module 1: Limits')
         self.assertContains(response, 'Module 2: Derivatives')
 
-    def test_course_detail_displays_first_module_by_default(self):
-        """Test first module is shown when no specific module requested"""
+    @mock.patch("students.views.r")
+    def test_course_detail_displays_first_module_by_default(self, mock_redis):
+        """Test first module is shown when no last-accessed module is recorded."""
+        mock_redis.get.return_value = None  # no remembered module
         self.client.login(username='student', password='studentpass')
 
         url = reverse('student_course_detail', args=[self.course.id])
@@ -344,14 +383,17 @@ class StudentCourseDetailTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['module'], self.module2)
 
-    def test_course_detail_prefetches_contents(self):
-        """Test query optimization with prefetch_related"""
+    @mock.patch("students.views.r")
+    def test_course_detail_prefetches_contents(self, mock_redis):
+        """Test query optimization with prefetch_related (Redis mocked)."""
+        mock_redis.get.return_value = None
         self.client.login(username='student', password='studentpass')
 
         url = reverse('student_course_detail', args=[self.course.id])
 
-        # Should use minimal queries
-        with self.assertNumQueries(6):  # Optimized with prefetch
+        # session, user, course (+owner/subject join), modules prefetch,
+        # contents prefetch. self.object is reused (no duplicate get_object).
+        with self.assertNumQueries(5):
             response = self.client.get(url)
             course = response.context['object']
             # Accessing modules shouldn't cause N+1 queries
@@ -388,3 +430,90 @@ class CourseEnrollFormTest(TestCase):
         """Test form is invalid with non-existent course ID"""
         form = CourseEnrollForm(data={'course': 99999})
         self.assertFalse(form.is_valid())
+
+
+from django.test import override_settings
+from courses.models import Content, Text
+from django.contrib.contenttypes.models import ContentType
+
+
+@override_settings(USE_FOUNDRY_UI=True)
+class FoundryRegisterPageTests(TestCase):
+    """Foundry-style registration page — TDD red→green tests."""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse("student_registration")
+
+    def test_register_page_uses_foundry_base(self):
+        """Registration page must contain .panel wrapper and btn-primary button."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="panel')
+        self.assertContains(response, "btn-primary")
+
+    def test_register_page_has_foundry_topbar(self):
+        """Response must include the Foundry topbar command-palette trigger."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'aria-label="Open command palette"')
+
+
+@override_settings(CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}})
+class PlayerHtmxTests(TestCase):
+    """M4: Foundry course player — HTMX content swap + mark-complete endpoint."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="playerstu", password="pw12345!")
+        cls.owner = User.objects.create_user(username="playerinstr", password="pw12345!")
+        cls.subject = Subject.objects.create(title="Tests", slug="m4-tests")
+        cls.course = Course.objects.create(
+            owner=cls.owner, subject=cls.subject,
+            title="M4 Course", slug="m4-course", overview="player tests",
+        )
+        cls.course.students.add(cls.user)
+        cls.module = Module.objects.create(course=cls.course, title="M4 Module", description="d")
+        text_item = Text.objects.create(owner=cls.owner, title="Lesson 1", content="Hello world")
+        cls.content = Content.objects.create(
+            module=cls.module,
+            content_type=ContentType.objects.get_for_model(Text),
+            object_id=text_item.id,
+        )
+
+    def setUp(self):
+        self.client.login(username="playerstu", password="pw12345!")
+
+    def test_player_content_endpoint_returns_partial_on_htmx(self):
+        url = reverse("player_content", args=[self.course.id, self.content.id])
+        response = self.client.get(url, HTTP_HX_REQUEST="true")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "shared/partials/_player_content.html")
+        self.assertContains(response, "Hello world")
+        self.assertNotContains(response, "<header")
+
+    def test_player_content_requires_enrollment(self):
+        other = User.objects.create_user(username="otherstu", password="pw12345!")
+        self.client.login(username="otherstu", password="pw12345!")
+        url = reverse("player_content", args=[self.course.id, self.content.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_mark_complete_post_creates_module_progress(self):
+        from analytics.models import ModuleProgress
+        url = reverse("mark_complete", args=[self.course.id, self.module.id])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        mp = ModuleProgress.objects.get(user=self.user, module=self.module)
+        self.assertEqual(mp.status, "completed")
+
+    def test_mark_complete_returns_progress_partial(self):
+        url = reverse("mark_complete", args=[self.course.id, self.module.id])
+        response = self.client.post(url)
+        self.assertTemplateUsed(response, "shared/partials/_progress_panel.html")
+        self.assertContains(response, "100%")
+
+    def test_mark_complete_get_not_allowed(self):
+        url = reverse("mark_complete", args=[self.course.id, self.module.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 405)

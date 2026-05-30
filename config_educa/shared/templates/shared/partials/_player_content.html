@@ -1,0 +1,29 @@
+{# HTMX swap target — renders the center-pane content for a single Content item.
+   Required context: course, content, module, item (Text/Video/Image/File instance) #}
+<div id="player-content" class="panel p-6">
+  <div class="flex items-baseline justify-between mb-4">
+    <div>
+      <div class="text-mono-label uppercase text-text-secondary mb-1">MODULE {{ module.order|add:1|stringformat:"02d" }}</div>
+      <h1 class="text-xl font-semibold text-text-primary">{{ item.title }}</h1>
+    </div>
+    <form method="post" action="{% url 'mark_complete' course.id module.id %}"
+          hx-post="{% url 'mark_complete' course.id module.id %}"
+          hx-target="#progress-panel"
+          hx-swap="outerHTML">
+      {% csrf_token %}
+      <button type="submit" class="btn-primary">MARK COMPLETE ✓</button>
+    </form>
+  </div>
+
+  <article class="prose prose-invert max-w-none text-text-primary">
+    {% if content.content_type.model == "text" %}
+      {{ item.content|linebreaks }}
+    {% elif content.content_type.model == "video" %}
+      <div class="aspect-video bg-bg-elevated border border-border-subtle">{{ item.url|safe }}</div>
+    {% elif content.content_type.model == "image" %}
+      <img src="{{ item.file.url }}" alt="{{ item.title }}" class="max-w-full">
+    {% elif content.content_type.model == "file" %}
+      <a href="{{ item.file.url }}" class="btn-ghost" download>DOWNLOAD {{ item.title|upper }}</a>
+    {% endif %}
+  </article>
+</div>

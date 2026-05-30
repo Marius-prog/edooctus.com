@@ -1,0 +1,22 @@
+{% if error %}
+  <div role="alert"
+       style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;
+              padding:1rem;border-radius:.375rem">
+    <strong>Error:</strong> {{ error }}
+  </div>
+{% elif run %}
+  <article style="border:1px solid #e5e7eb;border-radius:.5rem;overflow:hidden">
+    <header style="background:#f9fafb;padding:.75rem 1rem;border-bottom:1px solid #e5e7eb;
+                   display:flex;gap:1rem;align-items:center;flex-wrap:wrap;font-size:.85rem">
+      <span><strong>Model:</strong> {{ run.model_name }}</span>
+      <span><strong>Tokens:</strong> in={{ run.tokens_input }} out={{ run.tokens_output }}</span>
+      <span><strong>Latency:</strong> {{ run.latency_ms }}ms</span>
+      {% if run.cost_micros %}
+        <span><strong>Cost:</strong> ~${{ run.cost_micros|floatformat:0 }}µ</span>
+      {% endif %}
+      <span style="margin-left:auto;color:#059669">● {{ run.get_status_display }}</span>
+    </header>
+    <div style="padding:1rem;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,monospace;
+                line-height:1.5;font-size:.95rem">{{ run.response }}</div>
+  </article>
+{% endif %}

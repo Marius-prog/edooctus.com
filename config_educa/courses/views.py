@@ -13,7 +13,7 @@ from django.forms.models import modelform_factory
 from django.apps import apps
 from .models import Module, Content
 from braces.views import CsrfExemptMixin, JsonRequestResponseMixin
-from django.db.models import Count
+from django.db.models import Count, Q
 from .models import Subject
 from django.views.generic.detail import DetailView
 from students.forms import CourseEnrollForm
@@ -196,24 +196,10 @@ class ContentOrderView(CsrfExemptMixin,
         return self.render_json_response({'saved': 'OK'})
 
 
-# class CourseListView(TemplateResponseMixin, View):
-#     model = Course
-#     template_name = 'courses/course/list.html'
-#
-#     def get(self, request, subject=None):
-#         subjects = Subject.objects.annotate(
-#             total_courses=Count('courses'))
-#         courses = Course.objects.annotate(
-#             total_modules=Count('modules'))
-#         if subject:
-#             subject = get_object_or_404(Subject, slug=subject)
-#             courses = courses.filter(subject=subject)
-#         return self.render_to_response({'subjects': subjects,
-#                                         'subject': subject,
-#                                         'courses': courses})
 class CourseListView(TemplateResponseMixin, View):
     model = Course
     template_name = 'courses/course/list.html'
+    partial_template_name = 'shared/partials/_catalog_results.html'
 
     def get(self, request, subject=None):
         subjects = cache.get('all_subjects')
@@ -221,23 +207,53 @@ class CourseListView(TemplateResponseMixin, View):
             subjects = Subject.objects.annotate(
                 total_courses=Count('courses'))
             cache.set('all_subjects', subjects)
+
         all_courses = Course.objects.select_related('owner', 'subject').annotate(
             total_modules=Count('modules'))
-        if subject:
-            subject = get_object_or_404(Subject, slug=subject)
-            key = f'subject_{subject.id}_courses'
-            courses = cache.get(key)
-            if not courses:
+
+        # Query-param filters layered on top of URL-kwarg subject
+        subject_param = subject or request.GET.get('subject') or None
+        search = (request.GET.get('q') or '').strip()
+        filtered = bool(subject_param) or bool(search)
+
+        if subject_param:
+            subject = get_object_or_404(Subject, slug=subject_param)
+            if filtered or search:
                 courses = all_courses.filter(subject=subject)
-                cache.set(key, courses)
+            else:
+                key = f'subject_{subject.id}_courses'
+                courses = cache.get(key)
+                if not courses:
+                    courses = all_courses.filter(subject=subject)
+                    cache.set(key, courses)
+        elif filtered:
+            courses = all_courses
         else:
             courses = cache.get('all_courses')
             if not courses:
                 courses = all_courses
                 cache.set('all_courses', courses)
-        return self.render_to_response({'subjects': subjects,
-                                        'subject': subject,
-                                        'courses': courses})
+
+        if search:
+            courses = courses.filter(
+                Q(title__icontains=search) | Q(overview__icontains=search)
+            )
+
+        ctx = {
+            'subjects': subjects,
+            'subject': subject if isinstance(subject, Subject) else None,
+            'courses': courses,
+            'search': search,
+        }
+
+        if getattr(request, 'htmx', False):
+            return self.response_class(
+                request=request,
+                template=[self.partial_template_name],
+                context=ctx,
+                using=self.template_engine,
+            )
+        return self.render_to_response(ctx)
 
 
 class CourseDetailView(DetailView):

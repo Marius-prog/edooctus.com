@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Inbox{% endblock %}
+{% block content %}
+<div style="max-width:760px;margin:2rem auto;padding:0 1rem">
+  <header style="display:flex;justify-content:space-between;align-items:center;
+                 margin-bottom:1rem">
+    <h1 style="margin:0">Inbox
+      {% if unread %}
+        <span style="background:#ef4444;color:#fff;border-radius:9999px;
+                     padding:.1rem .5rem;font-size:.85rem;margin-left:.5rem">
+          {{ unread }}
+        </span>
+      {% endif %}
+    </h1>
+    {% if unread %}
+    <button type="button"
+            hx-post="/inbox/api/notifications/read_all/"
+            hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+            hx-on::after-request="location.reload()"
+            style="background:#6b7280;color:#fff;border:0;padding:.4rem .8rem;
+                   border-radius:.375rem;cursor:pointer;font-size:.85rem">
+      Mark all read
+    </button>
+    {% endif %}
+  </header>
+
+  <ul style="list-style:none;padding:0;margin:0">
+    {% for n in notifications %}
+    <li style="border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;
+               margin-bottom:.5rem;
+               {% if not n.is_read %}background:#eff6ff;border-color:#bfdbfe{% endif %}">
+      <header style="display:flex;justify-content:space-between;
+                     align-items:center;gap:1rem">
+        <strong>{{ n.title }}</strong>
+        <small style="color:#6b7280">{{ n.created|timesince }} ago</small>
+      </header>
+      {% if n.body %}
+        <p style="margin:.4rem 0;color:#374151">{{ n.body }}</p>
+      {% endif %}
+      <footer style="display:flex;justify-content:space-between;
+                     align-items:center;margin-top:.5rem;font-size:.85rem">
+        <span style="color:#6b7280">{{ n.get_kind_display }}</span>
+        <span style="display:flex;gap:.5rem">
+          {% if n.link %}
+            <a href="{{ n.link }}" style="color:#3b82f6">Open →</a>
+          {% endif %}
+          {% if not n.is_read %}
+            <button type="button"
+                    hx-post="/inbox/api/notifications/{{ n.id }}/read/"
+                    hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+                    hx-swap="none"
+                    style="background:transparent;border:0;color:#3b82f6;
+                           cursor:pointer;font-size:.85rem">
+              Mark read
+            </button>
+          {% endif %}
+        </span>
+      </footer>
+    </li>
+    {% empty %}
+      <li style="padding:3rem;text-align:center;color:#6b7280">
+        No notifications. You're all caught up! 🎉
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+<script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+{% endblock %}

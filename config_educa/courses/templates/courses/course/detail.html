@@ -1,17 +1,11 @@
-{% extends "base.html" %}
+{% extends BASE_TEMPLATE %}
 
-{% block title %}{{ object.title }} - Learn Online at Educto{% endblock %}
-
+{% block title %}{{ object.title }} - Learn Online{% endblock %}
 {% block meta_description %}{{ object.overview|truncatewords:30 }}{% endblock %}
-
-{% block meta_keywords %}{{ object.title }}, {{ object.subject.title }}, online course, learn online, {{ object.subject.title }} course{% endblock %}
-
-{% block og_title %}{{ object.title }} - Educto{% endblock %}
-
-{% block og_description %}{{ object.overview|truncatewords:30 }}{% endblock %}
+{% block breadcrumb %}CATALOG ▸ {{ object.title|upper }}{% endblock %}
 
 {% block content %}
-{# JSON-LD Structured Data for Course #}
+{# JSON-LD (same in both modes) #}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -19,33 +13,120 @@
   "name": "{{ object.title|escapejs }}",
   "description": "{{ object.overview|escapejs }}",
   "url": "https://educto.io/course/{{ object.slug }}/",
-  "provider": {
-    "@type": "Organization",
-    "name": "Educto",
-    "sameAs": "https://educto.io",
-    "url": "https://educto.io"
-  },
-  "instructor": {
-    "@type": "Person",
-    "name": "{{ object.owner.get_full_name|default:object.owner.username|escapejs }}"
-  },
+  "provider": {"@type": "Organization", "name": "Educto", "url": "https://educto.io"},
+  "instructor": {"@type": "Person", "name": "{{ object.owner.get_full_name|default:object.owner.username|escapejs }}"},
   "teaches": "{{ object.subject.title|escapejs }}",
   "inLanguage": "en",
   "datePublished": "{{ object.created|date:'c' }}",
-  "hasCourseInstance": {
-    "@type": "CourseInstance",
-    "courseMode": "online",
-    "courseWorkload": "PT{{ object.modules.count }}H"
-  }
+  "hasCourseInstance": {"@type": "CourseInstance", "courseMode": "online", "courseWorkload": "PT{{ object.modules.count }}H"}
 }
 </script>
+
+{% if USE_FOUNDRY_UI %}
+<div class="max-w-6xl">
+
+  {# === HERO: meta + enroll panel ============================================ #}
+  <div class="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-6 mb-8">
+
+    <div class="panel p-6">
+      <div class="text-mono-label uppercase text-accent mb-2">{{ object.subject.title }}</div>
+      <h1 class="text-3xl font-semibold mb-3 leading-tight">{{ object.title }}</h1>
+      <p class="text-text-secondary mb-6 leading-relaxed">{{ object.overview }}</p>
+
+      <div class="border-t border-border-subtle pt-4">
+        <table class="w-full text-sm">
+          <tbody>
+            <tr class="border-b border-border-subtle">
+              <td class="text-mono-label uppercase text-text-secondary py-2">MODULES</td>
+              <td class="text-mono-data text-text-mono text-right py-2">{{ object.modules.count|stringformat:"02d" }}</td>
+            </tr>
+            <tr class="border-b border-border-subtle">
+              <td class="text-mono-label uppercase text-text-secondary py-2">STUDENTS</td>
+              <td class="text-mono-data text-text-mono text-right py-2">{{ object.students.count|stringformat:"04d" }}</td>
+            </tr>
+            <tr class="border-b border-border-subtle">
+              <td class="text-mono-label uppercase text-text-secondary py-2">SUBJECT</td>
+              <td class="text-mono-label uppercase text-text-primary text-right py-2">{{ object.subject.title|upper }}</td>
+            </tr>
+            {% if object.average_rating %}
+            <tr class="border-b border-border-subtle">
+              <td class="text-mono-label uppercase text-text-secondary py-2">RATING</td>
+              <td class="text-mono-data text-text-mono text-right py-2">★ {{ object.average_rating|floatformat:1 }} ({{ object.total_reviews }})</td>
+            </tr>
+            {% endif %}
+            <tr>
+              <td class="text-mono-label uppercase text-text-secondary py-2">INSTRUCTOR</td>
+              <td class="text-mono-label uppercase text-text-primary text-right py-2">{{ object.owner.get_full_name|default:object.owner.username }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside class="panel p-6 self-start sticky top-16">
+      <div class="text-mono-label uppercase text-text-secondary mb-3">ENROLL</div>
+      <div class="text-display text-text-mono font-mono mb-1">FREE</div>
+      <div class="text-mono-label uppercase text-text-muted mb-4">LIFETIME ACCESS</div>
+
+      {% if request.user.is_authenticated %}
+        <form action="{% url 'student_enroll_course' %}" method="post">
+          {% csrf_token %}
+          {{ enroll_form }}
+          <button type="submit" class="btn-primary w-full justify-center">ENROLL NOW →</button>
+        </form>
+      {% else %}
+        <a href="{% url 'student_registration' %}" class="btn-primary w-full justify-center">REGISTER TO ENROLL →</a>
+      {% endif %}
+
+      <div class="border-t border-border-subtle mt-6 pt-4 flex flex-col gap-2">
+        <div class="text-mono-label uppercase text-text-secondary mb-1">INCLUDES</div>
+        <div class="text-sm text-text-secondary"><span class="text-success">✓</span> {{ object.modules.count }} modules</div>
+        <div class="text-sm text-text-secondary"><span class="text-success">✓</span> Live chat room</div>
+        <div class="text-sm text-text-secondary"><span class="text-success">✓</span> Completion certificate</div>
+      </div>
+    </aside>
+  </div>
+
+  {# === CURRICULUM ============================================================ #}
+  <section class="mb-8">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">CURRICULUM</h2>
+    <div class="panel">
+      {% if object.modules.all %}
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-border-subtle">
+              <th class="text-mono-label uppercase text-text-secondary text-left py-3 px-3 w-16">#</th>
+              <th class="text-mono-label uppercase text-text-secondary text-left py-3 px-3">MODULE</th>
+              <th class="text-mono-label uppercase text-text-secondary text-right py-3 px-3 w-32">ITEMS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in object.modules.all %}
+            <tr class="border-b border-border-subtle hover:bg-bg-hover last:border-b-0">
+              <td class="text-mono-label text-text-secondary py-3 px-3">{{ forloop.counter|stringformat:"02d" }}</td>
+              <td class="py-3 px-3">
+                <div class="text-sm text-text-primary">{{ m.title }}</div>
+                {% if m.description %}<div class="text-mono-label uppercase text-text-muted mt-1">{{ m.description|truncatewords:14 }}</div>{% endif %}
+              </td>
+              <td class="text-mono-data text-text-mono text-right py-3 px-3">{{ m.contents.count }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="p-6 text-text-secondary text-sm">Curriculum coming soon.</div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+
+{% else %}
+{# ---------------- Original UI (flag OFF) ---------------- #}
 {% with subject=object.subject %}
 <div class="page-header">
   <div class="container">
     <div style="display: inline-block; margin-bottom: var(--spacing-sm);">
-      <a href="{% url 'course_list_subject' subject.slug %}" class="subject-badge">
-        {{ subject.title }}
-      </a>
+      <a href="{% url 'course_list_subject' subject.slug %}" class="subject-badge">{{ subject.title }}</a>
     </div>
     <h1>{{ object.title }}</h1>
     <p>{{ object.overview }}</p>
@@ -55,8 +136,7 @@
 <div class="module">
     <h2>Overview</h2>
     <p>
-        <a href="{% url 'course_list_subject' subject.slug %}">
-            {{ subject.title }}</a>.
+        <a href="{% url 'course_list_subject' subject.slug %}">{{ subject.title }}</a>.
         {{ object.modules.count }} modules.
         Instructor: {{ object.owner.get_full_name }}
     </p>
@@ -70,8 +150,8 @@
     {% else %}
     <a href="{% url 'student_registration' %}" class="button">Register to enroll</a>
     {% endif %}
-
 </div>
 </div>
 {% endwith %}
+{% endif %}
 {% endblock %}

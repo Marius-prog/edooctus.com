@@ -1,0 +1,13 @@
+{# Panel — reusable container.
+   Required: title (string)
+   Optional: actions (HTML string, rendered safe), body (HTML string, rendered safe)
+   For complex bodies use the .panel/.panel-header CSS classes directly instead. #}
+<section class="panel">
+  <header class="panel-header">
+    <span class="panel-title">{{ title }}</span>
+    {% if actions %}<div>{{ actions|safe }}</div>{% endif %}
+  </header>
+  <div class="p-4">
+    {{ body|safe }}
+  </div>
+</section>

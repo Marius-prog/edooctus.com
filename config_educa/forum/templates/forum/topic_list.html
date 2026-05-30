@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Discussion forum{% endblock %}
+{% block content %}
+<div style="max-width:960px;margin:2rem auto;padding:0 1rem">
+  <header style="display:flex;justify-content:space-between;align-items:center;
+                 gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+    <h1 style="margin:0">Discussion</h1>
+    <button type="button"
+            onclick="document.getElementById('new-topic').style.display='block'"
+            style="background:#3b82f6;color:#fff;border:0;padding:.5rem 1rem;
+                   border-radius:.375rem;cursor:pointer;font-weight:600">
+      + New topic
+    </button>
+  </header>
+
+  <section id="new-topic" style="display:none;border:1px solid #e5e7eb;
+           border-radius:.5rem;padding:1rem;margin-bottom:1.5rem;background:#f9fafb">
+    <h2 style="margin-top:0;font-size:1.1rem">Start a new topic</h2>
+    <form hx-post="/forum/api/topics/" hx-ext="json-enc"
+          hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+          hx-swap="none" hx-on::after-request="location.reload()">
+      {% csrf_token %}
+      <input type="number" name="category" required placeholder="Category ID"
+             style="width:100%;padding:.5rem;margin-bottom:.5rem;
+                    border:1px solid #d1d5db;border-radius:.375rem">
+      <input type="text" name="title" required placeholder="Topic title"
+             style="width:100%;padding:.5rem;margin-bottom:.5rem;
+                    border:1px solid #d1d5db;border-radius:.375rem">
+      <input type="text" name="slug" required placeholder="topic-slug"
+             style="width:100%;padding:.5rem;margin-bottom:.75rem;
+                    border:1px solid #d1d5db;border-radius:.375rem">
+      <button type="submit" style="background:#10b981;color:#fff;border:0;
+              padding:.5rem 1rem;border-radius:.375rem;cursor:pointer">Create</button>
+    </form>
+  </section>
+
+  <ul style="list-style:none;padding:0;margin:0">
+    {% for topic in object_list %}
+    <li style="border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;
+               margin-bottom:.5rem;display:flex;justify-content:space-between;
+               align-items:center;gap:1rem">
+      <div>
+        {% if topic.is_pinned %}<span title="Pinned">📌</span>{% endif %}
+        {% if topic.is_locked %}<span title="Locked">🔒</span>{% endif %}
+        <a href="{% url 'forum:topic' topic.pk %}"
+           style="font-weight:600;color:#1f2937;text-decoration:none">
+          {{ topic.title }}
+        </a>
+        <div style="color:#6b7280;font-size:.85rem;margin-top:.25rem">
+          {{ topic.author.username }} · {{ topic.created|date:"M j, Y" }}
+        </div>
+      </div>
+      <div style="text-align:right;color:#6b7280;font-size:.85rem">
+        <div>{{ topic.posts.count }} replies</div>
+        <div>{{ topic.view_count }} views</div>
+      </div>
+    </li>
+    {% empty %}
+      <li style="padding:2rem;text-align:center;color:#6b7280">
+        No topics yet. Be the first!
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+<script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+<script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/json-enc.js" defer></script>
+{% endblock %}

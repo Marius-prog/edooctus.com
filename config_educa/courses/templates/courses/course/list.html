@@ -1,25 +1,82 @@
-{% extends "base.html" %}
+{% extends BASE_TEMPLATE %}
 
 {% block title %}
-  {% if subject %}{{ subject.title }} Courses - Educto{% else %}Browse All Online Courses - Educto{% endif %}
+  {% if subject %}{{ subject.title }} Courses{% else %}Browse All Online Courses{% endif %}
 {% endblock %}
+{% block breadcrumb %}CATALOG{% endblock %}
 
 {% block content %}
+{% if USE_FOUNDRY_UI %}
+
+<div class="max-w-6xl">
+  <div class="flex items-end justify-between mb-4">
+    <div>
+      <h2 class="text-mono-label uppercase text-text-secondary mb-1">COURSES</h2>
+      <h1 class="text-2xl font-semibold">
+        {% if subject %}{{ subject.title }}{% elif search %}Results for "{{ search }}"{% else %}Catalog{% endif %}
+      </h1>
+    </div>
+    <span id="catalog-result-count" class="text-mono-label uppercase text-text-muted">{{ courses|length }} RESULTS</span>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
+
+    {# === FILTERS RAIL ============================================== #}
+    <aside class="panel p-4 self-start sticky top-16">
+      <div class="text-mono-label uppercase text-text-secondary mb-3">SUBJECT</div>
+      <form id="catalog-filters"
+            hx-get="{% url 'course_list' %}"
+            hx-trigger="change delay:150ms from:input, keyup changed delay:300ms from:input[name=q]"
+            hx-target="#catalog-results"
+            hx-push-url="true"
+            hx-include="this"
+            class="flex flex-col gap-2">
+
+        <label class="flex items-center gap-2 text-sm cursor-pointer
+                      {% if not subject %}text-accent{% else %}text-text-secondary hover:text-text-primary{% endif %}">
+          <input type="radio" name="subject" value=""
+                 {% if not subject %}checked{% endif %}
+                 class="accent-accent">
+          ALL COURSES
+        </label>
+
+        {% for s in subjects %}
+          <label class="flex items-center justify-between gap-2 text-sm cursor-pointer
+                        {% if subject.id == s.id %}text-accent{% else %}text-text-secondary hover:text-text-primary{% endif %}">
+            <span class="flex items-center gap-2">
+              <input type="radio" name="subject" value="{{ s.slug }}"
+                     {% if subject.id == s.id %}checked{% endif %}
+                     class="accent-accent">
+              {{ s.title|upper }}
+            </span>
+            <span class="text-mono-label text-text-muted">{{ s.total_courses }}</span>
+          </label>
+        {% endfor %}
+
+        <div class="border-t border-border-subtle my-3"></div>
+        <label for="cf-q" class="text-mono-label uppercase text-text-secondary">SEARCH</label>
+        <input id="cf-q" name="q" type="search" placeholder="⌕ Title, topic…"
+               value="{{ search|default:'' }}" class="input">
+      </form>
+    </aside>
+
+    {# === RESULTS PANEL ============================================== #}
+    <div id="catalog-results" class="panel">
+      {% include "shared/partials/_catalog_results.html" %}
+    </div>
+
+  </div>
+</div>
+
+{% else %}
+{# ------------------ Original UI (flag OFF) ------------------ #}
   <div class="page-header">
     <div class="container">
       <h1>
-        {% if subject %}
-          {{ subject.title }} Courses
-        {% else %}
-          Explore Our Courses
-        {% endif %}
+        {% if subject %}{{ subject.title }} Courses{% else %}Explore Our Courses{% endif %}
       </h1>
       <p>
-        {% if subject %}
-          Master {{ subject.title }} with expert-led courses
-        {% else %}
-          Discover high-quality online courses taught by industry experts
-        {% endif %}
+        {% if subject %}Master {{ subject.title }} with expert-led courses{% else %}Discover high-quality online courses taught by industry experts{% endif %}
       </p>
     </div>
   </div>
@@ -27,16 +84,10 @@
   <div class="container">
     {% if subjects %}
       <div class="subject-filter">
-        <a href="{% url 'course_list' %}" class="subject-badge {% if not subject %}active{% endif %}">
-          All Courses
-        </a>
+        <a href="{% url 'course_list' %}" class="subject-badge {% if not subject %}active{% endif %}">All Courses</a>
         {% for s in subjects %}
-          <a href="{% url 'course_list_subject' s.slug %}"
-             class="subject-badge {% if subject.id == s.id %}active{% endif %}">
-            {{ s.title }}
-            {% if s.total_courses %}
-              ({{ s.total_courses }})
-            {% endif %}
+          <a href="{% url 'course_list_subject' s.slug %}" class="subject-badge {% if subject.id == s.id %}active{% endif %}">
+            {{ s.title }}{% if s.total_courses %} ({{ s.total_courses }}){% endif %}
           </a>
         {% endfor %}
       </div>
@@ -46,47 +97,22 @@
       <div class="course-grid">
         {% for course in courses %}
           <div class="course-card">
-            <div class="course-card-image">
-              {{ course.title|slice:":1"|upper }}
-            </div>
+            <div class="course-card-image">{{ course.title|slice:":1"|upper }}</div>
             <div class="course-card-content">
-              <div class="course-card-subject">
-                {{ course.subject.title }}
-              </div>
-              <h3 class="course-card-title">
-                <a href="{% url 'course_detail' course.slug %}">
-                  {{ course.title }}
-                </a>
-              </h3>
-              <p class="course-card-overview">
-                {{ course.overview|truncatewords:20 }}
-              </p>
+              <div class="course-card-subject">{{ course.subject.title }}</div>
+              <h3 class="course-card-title"><a href="{% url 'course_detail' course.slug %}">{{ course.title }}</a></h3>
+              <p class="course-card-overview">{{ course.overview|truncatewords:20 }}</p>
               <div class="course-card-meta">
-                <span class="course-card-instructor">
-                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
-                  </svg>
-                  {{ course.owner.get_full_name|default:course.owner.username }}
-                </span>
-                {% if course.total_modules %}
-                  <span class="course-card-modules">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                      <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811V2.828zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492V2.687zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783z"/>
-                    </svg>
-                    {{ course.total_modules }} modules
-                  </span>
-                {% endif %}
+                <span class="course-card-instructor">{{ course.owner.get_full_name|default:course.owner.username }}</span>
+                {% if course.total_modules %}<span class="course-card-modules">{{ course.total_modules }} modules</span>{% endif %}
               </div>
             </div>
           </div>
         {% endfor %}
       </div>
     {% else %}
-      <div style="text-align: center; padding: var(--spacing-3xl) 0;">
-        <p style="font-size: var(--font-size-lg); color: var(--text-secondary);">
-          No courses available yet.
-        </p>
-      </div>
+      <p style="text-align: center; padding: var(--spacing-3xl) 0;">No courses available yet.</p>
     {% endif %}
   </div>
+{% endif %}
 {% endblock %}

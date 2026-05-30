@@ -1,0 +1,59 @@
+{% load static django_htmx honeypot_tags %}
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Educto{% endblock %} ▸ Educto</title>
+  <link rel="preconnect" href="https://rsms.me/">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+  <script defer src="https://unpkg.com/htmx.org@2.0.2"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  {% django_htmx_script %}
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-bg-base text-text-primary font-sans antialiased min-h-screen">
+  <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 btn-primary z-50">Skip to main</a>
+  {% include "shared/_topbar.html" %}
+  <div class="flex">
+    {% include "shared/_sidebar.html" %}
+    <main id="main" class="flex-1 min-h-[calc(100vh-3rem)] p-6">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  {% include "shared/_command_palette.html" %}
+  <div aria-live="polite" aria-atomic="true" class="sr-only" id="hx-live-region"></div>
+
+  <script>
+    // Announce HTMX swaps to the aria-live region for screen readers.
+    document.body.addEventListener('htmx:afterSwap', function (e) {
+      const live = document.getElementById('hx-live-region');
+      if (!live) return;
+      const target = e.target && e.target.id ? e.target.id : 'content';
+      live.textContent = 'Updated ' + target.replace(/-/g, ' ');
+    });
+
+    // Player keyboard shortcuts: j/k navigate curriculum, m mark complete.
+    document.addEventListener('keydown', function (e) {
+      const ae = document.activeElement;
+      if (ae && ['INPUT', 'TEXTAREA'].includes(ae.tagName)) return;
+      const rows = document.querySelectorAll('[hx-get*="/content/"]');
+      if (!rows.length) return;
+      const activeIdx = Array.from(rows).findIndex(r => r.classList.contains('bg-bg-active'));
+      if (e.key === 'j' || e.key === 'k') {
+        e.preventDefault();
+        const next = e.key === 'j' ? activeIdx + 1 : activeIdx - 1;
+        const target = rows[Math.max(0, Math.min(rows.length - 1, next))];
+        if (target) target.click();
+      } else if (e.key === 'm') {
+        const btn = document.querySelector('[hx-post*="/complete/"]');
+        if (btn) { e.preventDefault(); btn.click(); }
+      }
+    });
+  </script>
+  {% block extra_body %}{% endblock %}
+{% include "shared/_cookie_banner.html" %}
+{% honeypot_tripwire %}
+</body>
+</html>

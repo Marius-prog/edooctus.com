@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Privacy & Data{% endblock %}
+{% block content %}
+<div style="max-width:760px;margin:2rem auto;padding:0 1rem">
+  <h1>Privacy & data</h1>
+  <p style="color:#6b7280">
+    Manage what we know about you, export your data (GDPR Art. 15),
+    or request deletion (Art. 17).
+  </p>
+
+  <section style="border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;margin:1.5rem 0">
+    <h2 style="margin-top:0">Export my data</h2>
+    <p>Get a JSON archive of everything we store about your account.</p>
+    {% if exports %}
+      <ul style="list-style:none;padding:0">
+        {% for x in exports %}
+        <li style="padding:.5rem;border-top:1px solid #f3f4f6;display:flex;
+                   justify-content:space-between;align-items:center">
+          <span>
+            Requested {{ x.requested_at|date:"M j, Y H:i" }} —
+            <strong>{{ x.get_status_display }}</strong>
+          </span>
+          {% if x.status == "ready" %}
+            <a href="{% url 'privacy:download_export' x.download_token %}"
+               style="background:#10b981;color:#fff;padding:.3rem .75rem;
+                      border-radius:.25rem;text-decoration:none">
+              Download
+            </a>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <button type="button"
+            hx-post="{% url 'privacy:request_export' %}"
+            hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+            hx-on::after-request="location.reload()"
+            style="background:#3b82f6;color:#fff;border:0;padding:.5rem 1rem;
+                   border-radius:.375rem;cursor:pointer;font-weight:600">
+      Request new export
+    </button>
+  </section>
+
+  <section style="border:1px solid #fecaca;border-radius:.5rem;padding:1rem;
+                  margin:1.5rem 0;background:#fef2f2">
+    <h2 style="margin-top:0;color:#991b1b">Delete my account</h2>
+    <p>Permanent and irreversible. Your data will be anonymized after a 30-day grace period.</p>
+    {% if deletions %}
+      <p>Pending request:
+        <strong>{{ deletions.0.get_status_display }}</strong>
+        ({{ deletions.0.requested_at|date:"M j, Y" }})
+      </p>
+    {% else %}
+      <form hx-post="/privacy/api/deletions/" hx-ext="json-enc"
+            hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+            hx-confirm="Are you absolutely sure?"
+            hx-on::after-request="location.reload()">
+        {% csrf_token %}
+        <textarea name="reason" rows="3" placeholder="Optional reason"
+                  style="width:100%;padding:.5rem;border:1px solid #fecaca;
+                         border-radius:.375rem"></textarea>
+        <button type="submit" style="background:#dc2626;color:#fff;border:0;
+                padding:.5rem 1rem;border-radius:.375rem;cursor:pointer;
+                margin-top:.5rem;font-weight:600">
+          Request deletion
+        </button>
+      </form>
+    {% endif %}
+  </section>
+
+  <section style="margin-top:1.5rem">
+    <h2>Your consent history</h2>
+    <ul style="list-style:none;padding:0">
+      {% for c in consents %}
+      <li style="padding:.4rem 0;border-top:1px solid #f3f4f6;display:flex;
+                 justify-content:space-between">
+        <span>{{ c.get_kind_display }} v{{ c.version }}</span>
+        <span style="color:{% if c.granted %}#10b981{% else %}#6b7280{% endif %}">
+          {% if c.granted %}✓ Granted{% else %}✗ Revoked{% endif %}
+          · {{ c.granted_at|date:"M j" }}
+        </span>
+      </li>
+      {% empty %}
+        <li style="color:#6b7280">No consent records yet.</li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+<script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+<script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/json-enc.js" defer></script>
+{% endblock %}

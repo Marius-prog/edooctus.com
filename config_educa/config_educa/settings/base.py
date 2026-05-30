@@ -12,8 +12,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 from django.urls import reverse_lazy
-from django.core.cache import cache
-from django.core.cache import caches
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -25,7 +23,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-only-for-local-development')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Safe-by-default: base stays off; local.py opts into DEBUG=True for development.
+DEBUG = False
 
 ALLOWED_HOSTS = ["educto.io", "www.educto.io", "127.0.0.1", "localhost"]
 
@@ -43,7 +42,6 @@ INSTALLED_APPS = [
     'django_extensions',
     'students.apps.StudentsConfig',
     'embed_video',
-    'debug_toolbar',
     'redisboard',
     'rest_framework',
     'chat',
@@ -51,19 +49,78 @@ INSTALLED_APPS = [
     'analytics.apps.AnalyticsConfig',  # Analytics & Tracking
     'reviews.apps.ReviewsConfig',  # Course Reviews
     'certificates.apps.CertificatesConfig',  # Course Certificates
+    'tailwind',
+    'theme',
+    'shared.apps.SharedConfig',
+    'django_htmx',
+    # --- New domain apps (Nov 2025 scaffold) ---
+    'quizzes.apps.QuizzesConfig',
+    'ai_tools.apps.AIToolsConfig',
+    'forum.apps.ForumConfig',
+    'gamification.apps.GamificationConfig',
+    'notifications.apps.NotificationsConfig',
+    'mentorship.apps.MentorshipConfig',
+    'peer_review.apps.PeerReviewConfig',
+    'privacy.apps.PrivacyConfig',
+    'honeypot.apps.HoneypotConfig',
+    'django_celery_beat',
 ]
 
+# Email backend — console for dev; override in prod.py with real SMTP / SES.
+EMAIL_BACKEND = os.environ.get(
+    'DJANGO_EMAIL_BACKEND',
+    'django.core.mail.backends.console.EmailBackend',
+)
+DEFAULT_FROM_EMAIL = os.environ.get('DJANGO_FROM_EMAIL', 'noreply@educto.io')
+
+# --- Celery ---------------------------------------------------------------
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/2')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/3')
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TIMEZONE = 'UTC'
+CELERY_TASK_ALWAYS_EAGER = os.environ.get('CELERY_EAGER', 'False').lower() == 'true'
+CELERY_TASK_EAGER_PROPAGATES = True
+# Periodic schedule — wire with django-celery-beat in prod for DB-driven cron.
+CELERY_BEAT_SCHEDULE = {
+    'expire_old_exports': {
+        'task': 'privacy.tasks.expire_old_exports',
+        'schedule': 60 * 60 * 6,  # every 6h
+    },
+    'process_scheduled_deletions': {
+        'task': 'privacy.tasks.process_scheduled_deletions',
+        'schedule': 60 * 60,  # every hour
+    },
+    'honeypot_analyze': {
+        'task': 'honeypot.analyze',
+        'schedule': 60 * 60,  # hourly threat-intel aggregation
+    },
+}
+
+# --- Honeypot -------------------------------------------------------------
+# Comma-separated list of addresses that receive intrusion alerts (empty = none).
+SECURITY_ALERT_EMAILS = [
+    e.strip() for e in os.environ.get('SECURITY_ALERT_EMAILS', '').split(',') if e.strip()
+]
+
+# --- AI tool API keys (read from env; never commit) -----------------------
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+AI_TOOLS_DEFAULT_PROVIDER = os.environ.get('AI_TOOLS_DEFAULT_PROVIDER', 'fake')
+
 MIDDLEWARE = [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    # Honeypot probe tripwire — fail-open, runs early so scanner probes are
+    # logged before the rest of the stack. No-op for all legitimate paths.
+    'honeypot.middleware.HoneypotProbeMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    # 'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.cache.FetchFromCacheMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
 ]
 
 ROOT_URLCONF = 'config_educa.urls'
@@ -79,6 +136,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'config_educa.context_processors.feature_flags',
             ],
         },
     },
@@ -102,13 +160,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ]
 }
-
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
-#         'LOCATION': '127.0.0.1:11211',
-#     }
-# }
 
 CACHES = {
     'default': {
@@ -160,22 +211,15 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
-# STATICFILES_DIRS = [
-#     BASE_DIR / "static/",
-#     # Add additional directories here
-# ]
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = reverse_lazy('student_course_list')
+LOGIN_REDIRECT_URL = reverse_lazy('dashboard')
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-# MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 CACHE_MIDDLEWARE_ALIAS = 'default'
 CACHE_MIDDLEWARE_SECONDS = 60 * 15  # 15 minutes
@@ -185,9 +229,15 @@ INTERNAL_IPS = [
     '127.0.0.1',
 ]
 STATIC_ROOT = BASE_DIR / 'static'
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Redis settings for module tracking
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6379
 REDIS_DB = 1
+
+# -- Foundry UI / Tailwind ---------------------------------------------------
+TAILWIND_APP_NAME = 'theme'
+NPM_BIN_PATH = os.environ.get('NPM_BIN_PATH', '/opt/homebrew/bin/npm')
+
+# Feature flag: opt into the new Foundry-style base.html during rollout.
+USE_FOUNDRY_UI = os.environ.get('USE_FOUNDRY_UI', 'False').lower() == 'true'

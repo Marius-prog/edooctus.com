@@ -1,8 +1,28 @@
-{% extends "base.html" %}
+{% extends BASE_TEMPLATE %}
 
 {% block title %}Log-in{% endblock %}
+{% block breadcrumb %}SIGN IN{% endblock %}
 
 {% block content %}
+{% if USE_FOUNDRY_UI %}
+<div class="max-w-md mx-auto mt-12">
+  <div class="panel p-6">
+    <div class="text-mono-label uppercase text-text-secondary mb-4">SIGN IN</div>
+    {% if form.errors %}
+      <p class="badge-danger mb-3">Username and password didn't match.</p>
+    {% endif %}
+    <form action="{% url 'login' %}" method="post" class="flex flex-col gap-3">
+      {% csrf_token %}
+      <label class="text-mono-label uppercase text-text-secondary" for="id_username">USERNAME</label>
+      <input class="input" type="text" name="username" id="id_username" required autofocus value="{{ form.username.value|default:'' }}">
+      <label class="text-mono-label uppercase text-text-secondary mt-2" for="id_password">PASSWORD</label>
+      <input class="input" type="password" name="password" id="id_password" required>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="btn-primary mt-4">SIGN IN →</button>
+    </form>
+  </div>
+</div>
+{% else %}
   <h1>Log-in</h1>
   <div class="module">
     {% if form.errors %}
@@ -19,4 +39,5 @@
       </form>
     </div>
   </div>
+{% endif %}
 {% endblock %}

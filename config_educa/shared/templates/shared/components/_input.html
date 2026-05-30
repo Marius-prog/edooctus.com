@@ -1,0 +1,15 @@
+{# Input.
+   Required: name
+   Optional: type (default text), label, placeholder, value, required (bool), id #}
+{% with input_id=id|default:name %}
+<div class="flex flex-col gap-1.5">
+  {% if label %}<label for="{{ input_id }}" class="text-mono-label uppercase text-text-secondary">{{ label }}</label>{% endif %}
+  <input type="{{ type|default:'text' }}"
+         name="{{ name }}"
+         id="{{ input_id }}"
+         value="{{ value|default:'' }}"
+         placeholder="{{ placeholder|default:'' }}"
+         {% if required %}required{% endif %}
+         class="input">
+</div>
+{% endwith %}

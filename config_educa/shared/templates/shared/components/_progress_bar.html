@@ -1,0 +1,14 @@
+{# Progress bar.
+   Required: percent (0-100 int)
+   Optional: show_label (bool, default True) #}
+<div class="flex items-center gap-3">
+  <div class="flex-1 h-1 bg-bg-active overflow-hidden" role="progressbar"
+       aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ percent }}"
+       style="border-radius: 2px;">
+    <div class="h-full bg-accent transition-[width] duration-[240ms] ease-out"
+         style="width: {{ percent }}%"></div>
+  </div>
+  {% if show_label|default_if_none:True %}
+    <span class="text-mono-data text-text-mono w-10 text-right">{{ percent }}%</span>
+  {% endif %}
+</div>

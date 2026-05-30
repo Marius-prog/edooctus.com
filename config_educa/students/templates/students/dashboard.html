@@ -1,0 +1,105 @@
+{% extends "foundry_base.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+{% block breadcrumb %}DASHBOARD{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl">
+
+  {# === METRIC TILES ======================================================= #}
+  <section class="mb-8">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-mono-label uppercase text-text-secondary">MY LEARNING</h2>
+      <span class="text-mono-label uppercase text-text-muted">LIVE</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+      <div class="panel p-5">
+        <div class="text-mono-label uppercase text-text-secondary mb-2">ENROLLED</div>
+        <div class="text-display text-text-mono font-mono">{{ metric_enrolled|stringformat:"02d" }}</div>
+        <div class="text-mono-label uppercase text-text-muted mt-2">COURSES</div>
+      </div>
+
+      <div class="panel p-5">
+        <div class="text-mono-label uppercase text-text-secondary mb-2">COMPLETED</div>
+        <div class="text-display text-text-mono font-mono">{{ metric_completed|stringformat:"02d" }}</div>
+        <div class="text-mono-label uppercase text-text-muted mt-2">FINISHED</div>
+      </div>
+
+      <div class="panel p-5">
+        <div class="text-mono-label uppercase text-text-secondary mb-2">STREAK</div>
+        <div class="text-display text-text-mono font-mono">{{ metric_streak }}d</div>
+        <div class="text-mono-label uppercase text-text-muted mt-2">CONSECUTIVE DAYS</div>
+      </div>
+
+    </div>
+  </section>
+
+  {# === CONTINUE LEARNING ================================================== #}
+  <section class="mb-8">
+    <h2 class="text-mono-label uppercase text-text-secondary mb-3">CONTINUE LEARNING</h2>
+    <div class="panel">
+      {% if continue_learning %}
+        {% for item in continue_learning %}
+        <div class="flex items-center gap-4 p-4 border-b border-border-subtle last:border-b-0 hover:bg-bg-hover">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-baseline gap-3 mb-2">
+              <span class="text-mono-label uppercase tracking-wider text-text-primary truncate">{{ item.course.title }}</span>
+              <span class="text-mono-label uppercase text-text-muted shrink-0">M{{ item.modules_done|stringformat:"02d" }} / M{{ item.modules_total|stringformat:"02d" }}</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="flex-1 h-1 bg-bg-active overflow-hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ item.percent }}" style="border-radius:2px;">
+                <div class="h-full bg-accent transition-[width] duration-[240ms] ease-out" style="width: {{ item.percent }}%"></div>
+              </div>
+              <span class="text-mono-data text-text-mono w-10 text-right">{{ item.percent }}%</span>
+            </div>
+            <div class="text-sm text-text-secondary mt-2 truncate">Next: {{ item.next_module.title }}</div>
+          </div>
+          <a href="{% url 'student_course_detail_module' item.course.id item.next_module.id %}" class="btn-primary shrink-0">RESUME →</a>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="p-6 text-text-secondary text-sm">
+          You haven't started any courses yet.
+          <a href="/" class="text-accent hover:underline ml-2">BROWSE CATALOG →</a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  {# === ACTIVITY ========================================================== #}
+  <section class="mb-8">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-mono-label uppercase text-text-secondary">ACTIVITY</h2>
+      <span class="text-mono-label uppercase text-text-muted">LAST 30D</span>
+    </div>
+    <div class="panel p-4">
+      {% include "shared/components/_activity_sparkline.html" with bars=activity_bars title="Modules completed per day" %}
+    </div>
+  </section>
+
+  {# === RECOMMENDED ======================================================= #}
+  <section class="mb-8">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-mono-label uppercase text-text-secondary">RECOMMENDED FOR YOU</h2>
+      <span class="text-mono-label uppercase text-text-muted">TOP RATED</span>
+    </div>
+    {% if recommended %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {% for c in recommended %}
+      <a href="{{ c.get_absolute_url|default:'#' }}" class="panel p-4 hover:bg-bg-hover transition-colors duration-120 block">
+        <div class="text-mono-label uppercase text-accent mb-2 truncate">{{ c.subject.title }}</div>
+        <div class="text-sm font-semibold text-text-primary mb-3 line-clamp-2 leading-snug">{{ c.title }}</div>
+        <div class="text-mono-data text-text-mono">{{ c.module_count|stringformat:"02d" }} modules</div>
+        <div class="text-mono-label uppercase text-text-muted mt-2">★ {{ c.average_rating|floatformat:1 }} ({{ c.total_reviews }})</div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="panel p-6 text-text-secondary text-sm">No recommendations yet — enroll in a course first.</div>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}

@@ -1,15 +1,67 @@
-{% extends "base.html" %}
+{% extends BASE_TEMPLATE %}
 
-{% block title %}Chat room for "{{ course.title }}"{% endblock %}
+{% block title %}Chat: {{ course.title }}{% endblock %}
+{% block breadcrumb %}COURSES ▸ {{ course.title|upper }} ▸ CHAT{% endblock %}
 
 {% block content %}
+{% if USE_FOUNDRY_UI %}
+
+<div class="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4 -m-6 md:h-[calc(100vh-3rem)]">
+
+  {# === LEFT — enrolled users ============================================ #}
+  <aside class="bg-bg-panel border-r border-border-subtle overflow-y-auto"
+         aria-label="Enrolled users">
+    <div class="p-3 border-b border-border-subtle">
+      <div class="text-mono-label uppercase text-text-secondary">ENROLLED</div>
+      <div class="text-mono-data text-text-mono mt-1">{{ enrolled_users|length }} USERS</div>
+    </div>
+    <ul class="py-2">
+      {% for u in enrolled_users %}
+        <li class="flex items-center gap-2 px-3 py-1 hover:bg-bg-hover">
+          <span class="text-text-muted" aria-hidden="true">○</span>
+          <span class="text-mono-label uppercase text-text-secondary truncate">{{ u.username }}</span>
+        </li>
+      {% empty %}
+        <li class="px-3 py-2 text-text-muted text-sm italic">No users enrolled.</li>
+      {% endfor %}
+    </ul>
+  </aside>
+
+  {# === RIGHT — message stream + composer ================================ #}
+  <section class="flex flex-col">
+    <div class="px-4 py-3 border-b border-border-subtle bg-bg-panel">
+      <div class="text-mono-label uppercase text-text-secondary">CHAT</div>
+      <div class="text-sm text-text-primary truncate">{{ course.title }}</div>
+    </div>
+
+    <div id="chat" class="flex-1 overflow-y-auto bg-bg-base">
+      {% for message in latest_messages %}
+        {% if message.user == request.user %}
+          {% include "shared/components/_chat_message.html" with username="YOU" timestamp=message.sent_on|date:"H:i" body=message.content role="self" %}
+        {% elif message.user == course.owner %}
+          {% include "shared/components/_chat_message.html" with username=message.user.username|upper timestamp=message.sent_on|date:"H:i" body=message.content role="instructor" %}
+        {% else %}
+          {% include "shared/components/_chat_message.html" with username=message.user.username|upper timestamp=message.sent_on|date:"H:i" body=message.content %}
+        {% endif %}
+      {% empty %}
+        <div class="p-6 text-text-muted text-sm italic">No messages yet — be the first.</div>
+      {% endfor %}
+    </div>
+
+    <div class="border-t border-border-subtle p-3 bg-bg-panel flex gap-2">
+      <input id="chat-message-input" type="text" class="input flex-1" placeholder="⌕ Type a message… (⏎ to send)" autofocus>
+      <button id="chat-message-submit" type="submit" class="btn-primary">SEND →</button>
+    </div>
+  </section>
+</div>
+
+{% else %}
+{# ----------- Original UI (flag OFF) ----------- #}
   <div id="chat">
     {% for message in latest_messages %}
       <div class="message {% if message.user == request.user %}me{% else %}other{% endif %}">
         <strong>{{ message.user.username }}</strong>
-        <span class="date">
-          {{ message.sent_on|date:"Y.m.d H:i A" }}
-        </span>
+        <span class="date">{{ message.sent_on|date:"Y.m.d H:i A" }}</span>
         <br>
         {{ message.content }}
       </div>
@@ -19,67 +71,83 @@
     <input id="chat-message-input" type="text">
     <input id="chat-message-submit" type="submit" value="Send">
   </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_body %}
+  {{ course.id|json_script:"course-id" }}
+  {{ request.user.username|json_script:"request-user" }}
+  <script>
+    (function () {
+      const courseId = JSON.parse(document.getElementById('course-id').textContent);
+      const requestUser = JSON.parse(document.getElementById('request-user').textContent);
+      const url = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host +
+                  '/ws/chat/room/' + courseId + '/';
+      const chatSocket = new WebSocket(url);
+
+      const escapeHtml = (s) => s.replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+
+      chatSocket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        const chat = document.getElementById('chat');
+        const dateOptions = {hour: 'numeric', minute: 'numeric', hour12: false};
+        const datetime = new Date(data.datetime).toLocaleTimeString('en', dateOptions);
+        const isMe = data.user === requestUser;
+        const name = isMe ? 'YOU' : data.user.toUpperCase();
+        const useFoundry = !!document.querySelector('.bg-bg-base');
+
+        if (useFoundry) {
+          const colorCls = isMe ? 'text-text-muted'
+                          : (data.user === '{{ course.owner.username }}' ? 'text-accent' : 'text-text-primary');
+          chat.insertAdjacentHTML('beforeend',
+            `<article class="flex gap-3 py-2 px-3 hover:bg-bg-hover">
+               <span class="text-mono-label uppercase shrink-0 w-32 truncate ${colorCls}">${escapeHtml(name)}</span>
+               <span class="text-mono-label text-text-muted shrink-0">${datetime}</span>
+               <p class="flex-1 text-sm text-text-primary whitespace-pre-wrap break-words">${escapeHtml(data.message)}</p>
+             </article>`);
+        } else {
+          chat.insertAdjacentHTML('beforeend',
+            `<div class="message ${isMe ? 'me' : 'other'}">
+               <strong>${escapeHtml(name)}</strong>
+               <span class="date">${datetime}</span><br>
+               ${escapeHtml(data.message)}
+             </div>`);
+        }
+        chat.scrollTop = chat.scrollHeight;
+      };
+
+      chatSocket.onclose = function() { console.error('Chat socket closed unexpectedly'); };
+
+      const input = document.getElementById('chat-message-input');
+      const submitButton = document.getElementById('chat-message-submit');
+
+      function send() {
+        const message = input.value.trim();
+        if (!message) return;
+        chatSocket.send(JSON.stringify({message}));
+        input.value = '';
+        input.focus();
+      }
+      submitButton.addEventListener('click', send);
+      input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); send(); }
+      });
+      input.focus();
+    })();
+  </script>
 {% endblock %}
 
 {% block include_js %}
+  {# Backward compat for old base.html which renders include_js + domready #}
   {{ course.id|json_script:"course-id" }}
   {{ request.user.username|json_script:"request-user" }}
 {% endblock %}
 
 {% block domready %}
-  const courseId = JSON.parse(
-    document.getElementById('course-id').textContent
-  );
-  const requestUser = JSON.parse(
-    document.getElementById('request-user').textContent
-  );
-  const url = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host +
-              '/ws/chat/room/' + courseId + '/';
-  const chatSocket = new WebSocket(url);
-
-  chatSocket.onmessage = function(event) {
-    const data = JSON.parse(event.data);
-    const chat = document.getElementById('chat');
-
-    const dateOptions = {hour: 'numeric', minute: 'numeric', hour12: true};
-    const datetime = new Date(data.datetime).toLocaleString('en', dateOptions);
-    const isMe = data.user === requestUser;
-    const source = isMe ? 'me' : 'other';
-    const name = isMe ? 'Me' : data.user;
-
-    chat.innerHTML += '<div class="message ' + source + '">' +
-                      '<strong>' + name + '</strong> ' +
-                      '<span class="date">' + datetime + '</span><br>' +
-                      data.message + '</div>';
-    chat.scrollTop = chat.scrollHeight;
-  };
-
-  chatSocket.onclose = function(event) {
-    console.error('Chat socket closed unexpectedly');
-  };
-
-  const input = document.getElementById('chat-message-input');
-  const submitButton = document.getElementById('chat-message-submit');
-
-  submitButton.addEventListener('click', function(event) {
-    const message = input.value;
-    if(message) {
-      // send message in JSON format
-      chatSocket.send(JSON.stringify({'message': message}));
-      // clear input
-      input.value = '';
-      input.focus();
-    }
-  });
-
-  input.addEventListener('keypress', function(event) {
-    if (event.key === 'Enter') {
-      // cancel the default action, if needed
-      event.preventDefault();
-      // trigger click event on button
-      submitButton.click();
-    }
-  });
-
-  input.focus();
+  // Old-UI bootstrap (only runs when extending old base.html — no-op when extra_body fires)
+  if (!window.__educto_chat_booted) {
+    window.__educto_chat_booted = true;
+  }
 {% endblock %}

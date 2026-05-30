@@ -25,6 +25,7 @@ data/
 *.db
 *.sql
 *.dump
+*.rdb
 backups/
 
 # =============================================================================
@@ -92,6 +93,29 @@ Thumbs.db
 # =============================================================================
 node_modules/
 npm-debug.log*
+
+# Playwright e2e artifacts (report + per-run results)
+e2e/test-results/
+e2e/playwright-report/
+
+# Tailwind build artifacts
+config_educa/theme/static/css/dist/
+config_educa/theme/static_src/node_modules/
+config_educa/theme/static_src/package-lock.json
+
+# Screenshots / large binaries dropped anywhere in the tree
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mp4
+*.mov
+*.zip
+# But keep things we intentionally version
+!config_educa/static/**/*.png
+!config_educa/static/**/*.jpg
+!**/favicon*
+!**/logo*
 
 # =============================================================================
 # Duplicates / leftovers

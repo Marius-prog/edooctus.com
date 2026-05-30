@@ -1,0 +1,43 @@
+{% load static %}
+<aside x-data="{ drawerOpen: false }"
+       @open-sidebar.window="drawerOpen = true"
+       @keydown.escape.window="drawerOpen = false"
+       :class="drawerOpen ? 'max-md:translate-x-0' : 'max-md:-translate-x-full'"
+       class="w-14 hover:w-52 transition-[width,transform] duration-120 ease-foundry
+              bg-bg-panel border-r border-border-subtle
+              flex flex-col group sticky top-12 h-[calc(100vh-3rem)]
+              max-md:fixed max-md:top-12 max-md:left-0 max-md:z-40 max-md:w-52 max-md:transform"
+       aria-label="Primary navigation">
+  <nav class="flex flex-col py-3 flex-1">
+    <a href="/" class="nav-item" aria-label="Home">
+      <span class="nav-icon">▢</span>
+      <span class="nav-label">HOME</span>
+    </a>
+    <a href="/" class="nav-item" aria-label="Catalog">
+      <span class="nav-icon">⊞</span>
+      <span class="nav-label">CATALOG</span>
+    </a>
+    {% if user.is_authenticated %}
+    <a href="{% url 'dashboard' %}" class="nav-item" aria-label="Dashboard">
+      <span class="nav-icon">◰</span>
+      <span class="nav-label">DASHBOARD</span>
+    </a>
+    <a href="{% url 'student_course_list' %}" class="nav-item" aria-label="My courses">
+      <span class="nav-icon">▤</span>
+      <span class="nav-label">MY COURSES</span>
+    </a>
+    {% endif %}
+    <a href="/" class="nav-item" aria-label="Chat">
+      <span class="nav-icon">◐</span>
+      <span class="nav-label">CHAT</span>
+    </a>
+    <span class="border-t border-border-subtle my-3 mx-3"></span>
+    <a href="/" class="nav-item" aria-label="Components debug">
+      <span class="nav-icon">⊟</span>
+      <span class="nav-label">COMPONENTS</span>
+    </a>
+  </nav>
+  <div class="border-t border-border-subtle py-2 px-4">
+    <span class="nav-label text-mono-label uppercase text-text-muted">v1.4.2</span>
+  </div>
+</aside>

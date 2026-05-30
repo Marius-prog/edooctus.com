@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Mentorship{% endblock %}
+{% block content %}
+<div style="max-width:960px;margin:2rem auto;padding:0 1rem">
+  <h1>Mentorship hub</h1>
+
+  <section style="margin-top:1.5rem">
+    <h2>Available mentors</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+                gap:1rem">
+      {% for m in mentors %}
+      <article style="border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem">
+        <h3 style="margin:0 0 .25rem 0">{{ m.user.username }}</h3>
+        <div style="color:#f59e0b;margin-bottom:.5rem">
+          ★ {{ m.avg_rating|floatformat:1 }} · {{ m.total_sessions }} sessions
+        </div>
+        <p style="font-size:.9rem;color:#4b5563;margin:.5rem 0">
+          {{ m.bio|truncatewords:25|default:"No bio yet." }}
+        </p>
+        {% if m.expertise %}
+        <div style="margin:.5rem 0;display:flex;flex-wrap:wrap;gap:.25rem">
+          {% for tag in m.expertise %}
+            <span style="background:#eff6ff;color:#1e40af;padding:.15rem .5rem;
+                   border-radius:9999px;font-size:.75rem">{{ tag }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <form hx-post="/mentorship/api/requests/" hx-ext="json-enc"
+              hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+              hx-on::after-request="location.reload()">
+          {% csrf_token %}
+          <input type="hidden" name="mentor" value="{{ m.user_id }}">
+          <input type="text" name="goals" placeholder="What you want to learn"
+                 required
+                 style="width:100%;padding:.4rem;border:1px solid #d1d5db;
+                        border-radius:.25rem;font-size:.85rem">
+          <button type="submit" style="margin-top:.5rem;width:100%;
+                  background:#3b82f6;color:#fff;border:0;padding:.4rem;
+                  border-radius:.25rem;cursor:pointer">
+            Request mentorship
+          </button>
+        </form>
+      </article>
+      {% empty %}
+        <p style="color:#6b7280">No mentors available right now.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% if my_incoming %}
+  <section style="margin-top:2rem">
+    <h2>Incoming requests</h2>
+    {% for r in my_incoming %}
+      {% if r.status == "pending" %}
+      <div style="border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem 1rem;
+                  margin-bottom:.5rem;display:flex;justify-content:space-between;
+                  align-items:center;gap:1rem">
+        <div>
+          <strong>{{ r.mentee.username }}</strong>
+          <div style="color:#6b7280;font-size:.85rem">{{ r.goals }}</div>
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <button hx-post="/mentorship/api/requests/{{ r.id }}/accept/"
+                  hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+                  hx-on::after-request="location.reload()"
+                  style="background:#10b981;color:#fff;border:0;
+                  padding:.4rem .8rem;border-radius:.25rem;cursor:pointer">
+            Accept
+          </button>
+          <button hx-post="/mentorship/api/requests/{{ r.id }}/decline/"
+                  hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+                  hx-on::after-request="location.reload()"
+                  style="background:#6b7280;color:#fff;border:0;
+                  padding:.4rem .8rem;border-radius:.25rem;cursor:pointer">
+            Decline
+          </button>
+        </div>
+      </div>
+      {% endif %}
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if my_outgoing %}
+  <section style="margin-top:2rem">
+    <h2>My requests</h2>
+    <ul style="list-style:none;padding:0">
+      {% for r in my_outgoing %}
+      <li style="border:1px solid #e5e7eb;border-radius:.375rem;
+                 padding:.5rem .75rem;margin-bottom:.25rem;display:flex;
+                 justify-content:space-between">
+        <span>To <strong>{{ r.mentor.username }}</strong></span>
+        <span style="color:#6b7280">{{ r.get_status_display }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+</div>
+<script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+<script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/json-enc.js" defer></script>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Privacy policy{% endblock %}
+{% block content %}
+<article style="max-width:760px;margin:2rem auto;padding:0 1rem;line-height:1.6">
+  <h1>Privacy Policy</h1>
+  <p><em>Last updated: 2025-11-01</em></p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li>Account info (username, email)</li>
+    <li>Learning activity (course views, module progress, quiz submissions)</li>
+    <li>Community contributions (forum posts, chat messages, reviews)</li>
+    <li>AI tool usage logs (prompts, responses, token counts)</li>
+  </ul>
+
+  <h2>How we use it</h2>
+  <p>To deliver and improve the educational experience, generate analytics,
+     personalize recommendations, and meet legal obligations.</p>
+
+  <h2>Your rights (GDPR / CCPA)</h2>
+  <ul>
+    <li><strong>Access</strong> — request a JSON export of your data</li>
+    <li><strong>Rectification</strong> — edit your profile any time</li>
+    <li><strong>Erasure</strong> — request deletion (30-day grace period)</li>
+    <li><strong>Portability</strong> — exports use a standard JSON format</li>
+    <li><strong>Object</strong> — opt out of marketing communications</li>
+  </ul>
+
+  <p>Visit <a href="{% url 'privacy:settings' %}">Privacy & data</a>
+     to exercise these rights.</p>
+
+  <h2>Contact</h2>
+  <p>For privacy queries, email <a href="mailto:privacy@educto.io">privacy@educto.io</a>.</p>
+</article>
+{% endblock %}
